@@ -70,13 +70,13 @@ export default function Hero() {
   };
 
   return (
-    <section ref={root} id="top" className="relative isolate overflow-hidden pt-[72px]">
+    <section ref={root} id="top" className="relative isolate overflow-hidden pt-[88px]">
       {/* backdrop */}
       <div className="grid-bg absolute inset-0 -z-10 opacity-60" />
       <div className="absolute -left-40 top-20 -z-10 h-[520px] w-[520px] rounded-full bg-indigo/20 blur-[140px]" />
       <div className="absolute -right-20 bottom-0 -z-10 h-[420px] w-[620px] rounded-full bg-cyan/10 blur-[140px]" />
 
-      <div className="container-x grid min-h-[calc(100svh-72px)] items-center gap-6 pb-10 lg:grid-cols-[1.02fr_1fr]">
+      <div className="container-x grid min-h-[calc(100svh-88px)] items-center gap-6 pb-10 lg:grid-cols-[1.02fr_1fr]">
         {/* copy */}
         <div className="relative z-10 pt-10 lg:pt-0">
           <p data-reveal data-eyebrow className="eyebrow">

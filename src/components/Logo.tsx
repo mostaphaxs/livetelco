@@ -6,8 +6,8 @@ export default function Logo({ className = "", height = 34 }: { className?: stri
     <Image
       src="/logo.png"
       alt="LiveTelco — Connect Anywhere"
-      width={179}
-      height={41}
+      width={180}
+      height={45}
       priority
       unoptimized
       className={className}

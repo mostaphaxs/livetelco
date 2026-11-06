@@ -1,9 +1,11 @@
 // Removes the flat dark background from info/logo.png -> public/logo.png (fully transparent bg).
-// Alpha comes from the distance to the background colour, and colours are
-// "un-mixed" from the background so anti-aliased edges stay clean on any backdrop.
+// Exact "colour to alpha": each pixel p is split into p = a*fg + (1-a)*bg with the
+// smallest alpha that keeps fg inside [0,255]. Nothing is thresholded away, so thin
+// strokes, anti-aliased edges and the darker parts of the globe all survive, and
+// the logo looks identical to the original when placed back on its own background.
 import sharp from "sharp";
-
 import { fileURLToPath } from "node:url";
+
 const src = fileURLToPath(new URL("../info/logo.png", import.meta.url));
 const out = fileURLToPath(new URL("../public/logo.png", import.meta.url));
 
@@ -17,11 +19,15 @@ for (let y = 0; y < h; y++) for (const x of [0, w - 1]) border.push((y * w + x) 
 const med = (c) => border.map((i) => data[i + c]).sort((a, b) => a - b)[border.length >> 1];
 const bg = [med(0), med(1), med(2)];
 
-const T0 = 18; // <= this distance: fully transparent
-const T1 = 90; // >= this distance: fully opaque
+const NOISE = 4 / 255; // ignore jpeg-ish speckle in the flat background
 for (let i = 0; i < data.length; i += 4) {
-  const d = Math.hypot(data[i] - bg[0], data[i + 1] - bg[1], data[i + 2] - bg[2]);
-  const a = Math.min(1, Math.max(0, (d - T0) / (T1 - T0)));
+  let a = 0;
+  for (let c = 0; c < 3; c++) {
+    const p = data[i + c], b = bg[c];
+    const ac = p > b ? (p - b) / (255 - b) : p < b ? (b - p) / b : 0;
+    if (ac > a) a = ac;
+  }
+  a = a <= NOISE ? 0 : Math.min(1, a * (data[i + 3] / 255));
   if (a === 0) {
     data[i] = data[i + 1] = data[i + 2] = data[i + 3] = 0;
     continue;
@@ -32,7 +38,9 @@ for (let i = 0; i < data.length; i += 4) {
   data[i + 3] = Math.round(a * 255);
 }
 
-// trim the now-empty margins
-await sharp(data, { raw: { width: w, height: h, channels: 4 } }).trim({ threshold: 1 }).png({ compressionLevel: 9 }).toFile(out);
+await sharp(data, { raw: { width: w, height: h, channels: 4 } })
+  .trim({ threshold: 1 })
+  .png({ compressionLevel: 9 })
+  .toFile(out);
 const meta = await sharp(out).metadata();
 console.log(`bg rgb(${bg}) -> public/logo.png ${meta.width}x${meta.height}`);
