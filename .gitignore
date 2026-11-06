@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# production build output when run beside next dev
+/.next-prod/
+
+# raw source assets (logo + 55 MB film); optimised copies live in public/
+/info/
