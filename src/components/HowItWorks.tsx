@@ -1,6 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import Signal from "./Signal";
+import { useInView } from "@/lib/motion";
+import { develop, fade, grow, q, signal, timeline, wipe } from "@/lib/reveal";
 
 // Illustrations are stills from the LiveTelco film (scripts/make-scenes.mjs).
 const STEPS = [
@@ -31,23 +34,51 @@ const CHECKS = [
 ];
 
 export default function HowItWorks() {
+  // the signal crosses the illustration from left to right, then the five steps
+  // light up in order like a progress line
+  const ref = useInView<HTMLElement>(
+    (el) => {
+      const tl = timeline();
+      signal(tl, el, 0);
+      fade(tl, q(el, '[data-anim="fade"]'), 250);
+      wipe(tl, q(el, '[data-anim="wipe"]'), 600, 0, 1500);
+      grow(tl, q(el, '[data-anim="grow"]'), 1700, 260);
+      fade(tl, q(el, '[data-anim="step"]'), 1800, 260);
+      return () => tl.revert();
+    },
+    { threshold: 0.12 },
+  );
+  // the two photos develop when they come into view
+  const cardsRef = useInView<HTMLDivElement>(
+    (el) => {
+      const tl = timeline();
+      fade(tl, q(el, '[data-anim="card"]'), 0, 150);
+      develop(tl, q(el, '[data-anim="develop"]'), 100, 180);
+      return () => tl.revert();
+    },
+    { threshold: 0.15 },
+  );
+
   return (
-    <section id="how" className="dark sec">
+    <section ref={ref} id="how" className="dark relative sec">
+      <Signal />
       <div className="container-x">
         <div className="grid items-end gap-6 lg:grid-cols-[1.2fr_1fr]">
           <div>
-            <p className="eyebrow">How it works</p>
-            <h2 className="h-section mt-4">
+            <p data-anim="fade" className="eyebrow">
+              How it works
+            </p>
+            <h2 data-anim="fade" className="h-section mt-4">
               You bring the antennas. We run everything around them.
             </h2>
           </div>
-          <p className="lead max-w-md lg:justify-self-end">
+          <p data-anim="fade" className="lead max-w-md lg:justify-self-end">
             Land, licence, fence, power, shelter, fibre and the people on site
             are already in place, and operated by LiveTelco.
           </p>
         </div>
 
-        <div className="frame mt-12">
+        <div data-anim="wipe" className="frame mt-12">
           <Image
             src="/media/scenes/how.webp"
             alt="LiveTelco teleport: satellites link to your antennas, inside a fenced site with CCTV, shelter, generator and grid power"
@@ -60,21 +91,28 @@ export default function HowItWorks() {
 
         <ol className="mt-10 grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-5">
           {STEPS.map((s, i) => (
-            <li key={s.t} className="border-t border-line pt-4">
-              <div className="text-sm font-semibold text-accent-ink tabular-nums">
-                0{i + 1}
+            <li key={s.t} className="relative border-t border-line pt-4">
+              <span
+                data-anim="grow"
+                aria-hidden="true"
+                className="absolute inset-x-0 -top-px h-px bg-accent"
+              />
+              <div data-anim="step">
+                <div className="text-sm font-semibold text-accent-ink tabular-nums">
+                  0{i + 1}
+                </div>
+                <div className="mt-1.5 font-display font-semibold text-heading">
+                  {s.t}
+                </div>
+                <p className="mt-1 text-sm leading-relaxed text-muted">{s.d}</p>
               </div>
-              <div className="mt-1.5 font-display font-semibold text-heading">
-                {s.t}
-              </div>
-              <p className="mt-1 text-sm leading-relaxed text-muted">{s.d}</p>
             </li>
           ))}
         </ol>
 
-        <div className="mt-20 grid gap-6 lg:grid-cols-2">
-          <article className="card overflow-hidden">
-            <div className="relative bg-[#0b1220]">
+        <div ref={cardsRef} className="mt-20 grid gap-6 lg:grid-cols-2">
+          <article data-anim="card" className="card overflow-hidden">
+            <div data-anim="develop" className="relative bg-[#0b1220]">
               <Image
                 src="/media/scenes/teleport.webp"
                 alt="Isometric view of a LiveTelco teleport compound with antennas, shelter and security"
@@ -110,8 +148,8 @@ export default function HowItWorks() {
             </div>
           </article>
 
-          <article className="card overflow-hidden">
-            <div className="bg-[#0b1220]">
+          <article data-anim="card" className="card overflow-hidden">
+            <div data-anim="develop" className="bg-[#0b1220]">
               <Image
                 src="/media/scenes/security.webp"
                 alt="Fenced teleport with electronic gate, CCTV night vision and an intrusion alert sent to the NOC"

@@ -1,5 +1,9 @@
 "use client";
 
+import Signal from "./Signal";
+import { useInView } from "@/lib/motion";
+import { draw, fade, q, signal, timeline } from "@/lib/reveal";
+
 const ROWS = [
   {
     title: "Land owned or on long-term lease",
@@ -17,20 +21,39 @@ const ROWS = [
 ];
 
 export default function Compliance() {
+  // the approvals are granted one by one: each row appears, then its tick draws itself
+  const ref = useInView<HTMLElement>(
+    (el) => {
+      const tl = timeline();
+      signal(tl, el, 0);
+      fade(tl, q(el, '[data-anim="fade"]'), 250);
+      fade(tl, q(el, '[data-anim="row"]'), 650, 380);
+      draw(tl, q(el, '[data-anim="draw"]'), 900, 380);
+      return () => tl.revert();
+    },
+    { threshold: 0.2 },
+  );
+
   return (
-    <section id="compliance" className="sec">
+    <section ref={ref} id="compliance" className="relative sec">
+      <Signal />
       <div className="container-x grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-20">
         <div>
-          <p className="eyebrow">Every LiveTelco teleport</p>
-          <h2 className="h-section mt-4">
+          <p data-anim="fade" className="eyebrow">
+            Every LiveTelco teleport
+          </p>
+          <h2 data-anim="fade" className="h-section mt-4">
             Licensed, approved and zoned for satellite.
           </h2>
-          <p className="lead mt-5 max-w-md">
+          <p data-anim="fade" className="lead mt-5 max-w-md">
             Each site comes with its licence, local-authority approvals and the
             zoning that allows RF and satellite operations. Operators install on
             land that is ready — not on a promise.
           </p>
-          <div className="mt-8 inline-flex items-center gap-3 rounded-lg bg-soft px-4 py-3 text-sm">
+          <div
+            data-anim="fade"
+            className="mt-8 inline-flex items-center gap-3 rounded-lg bg-soft px-4 py-3 text-sm"
+          >
             <span className="font-semibold text-heading">
               ISO/IEC 27001:2022
             </span>
@@ -40,7 +63,7 @@ export default function Compliance() {
 
         <ol className="divide-y divide-line border-y border-line">
           {ROWS.map((r, i) => (
-            <li key={r.title} className="flex gap-5 py-6">
+            <li key={r.title} data-anim="row" className="flex gap-5 py-6">
               <span className="font-display text-sm font-semibold text-accent-ink tabular-nums">
                 0{i + 1}
               </span>
@@ -56,6 +79,7 @@ export default function Compliance() {
                 viewBox="0 0 24 24"
                 fill="none"
                 aria-hidden="true"
+                data-anim="draw"
                 className="mt-1 shrink-0 text-green"
               >
                 <circle

@@ -1,10 +1,11 @@
 "use client";
 
 import { animate, stagger } from "animejs";
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import Globe from "./globe/Globe";
-import { prefersReducedMotion } from "@/lib/motion";
+import Signal from "./Signal";
+import { prefersReducedMotion, useInView } from "@/lib/motion";
+import { fade, q, signal, timeline } from "@/lib/reveal";
 import { KIND_META, SITES, type Site, type SiteKind } from "@/lib/locations";
 
 type Filter = "all" | SiteKind;
@@ -67,21 +68,41 @@ export default function Network() {
   }, [filter]);
   const tabs: Filter[] = ["all", "teleport", "tower", "future"];
 
+  // the signal crosses, then the countries come online one after another
+  const ref = useInView<HTMLElement>(
+    (el) => {
+      const tl = timeline();
+      signal(tl, el, 0);
+      fade(tl, q(el, '[data-anim="fade"]'), 250);
+      fade(tl, q(el, '[data-anim="country"]'), 700, 110);
+      return () => tl.revert();
+    },
+    { threshold: 0.12 },
+  );
+
   return (
-    <section id="network" className="dark relative overflow-hidden sec">
+    <section
+      ref={ref}
+      id="network"
+      className="dark relative overflow-hidden sec"
+    >
+      <Signal />
       <div className="container-x">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div className="max-w-2xl">
-            <p className="eyebrow">Our teleports</p>
-            <h2 className="h-section mt-4">
+            <p data-anim="fade" className="eyebrow">
+              Our teleports
+            </p>
+            <h2 data-anim="fade" className="h-section mt-4">
               14 locations in 7 countries. 13 more on the way.
             </h2>
-            <p className="lead mt-4">
+            <p data-anim="fade" className="lead mt-4">
               Every plot is owned by LiveTelco or held on a long-term lease.
               Drag the globe, or pick a site in the list.
             </p>
           </div>
           <div
+            data-anim="fade"
             role="tablist"
             aria-label="Filter sites"
             className="flex flex-wrap gap-1 rounded-lg border border-line p-1"
@@ -171,6 +192,7 @@ export default function Network() {
                 <li
                   key={country}
                   data-li
+                  data-anim="country"
                   className="border-b border-line px-4 py-3.5 last:border-b-0"
                 >
                   <div className="flex items-baseline justify-between">

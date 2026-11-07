@@ -2,6 +2,9 @@
 
 import Image from "next/image";
 import Logo from "./Logo";
+import Signal from "./Signal";
+import { useInView } from "@/lib/motion";
+import { develop, fade, power, q, signal, timeline } from "@/lib/reveal";
 
 const NEWS = [
   {
@@ -40,26 +43,58 @@ const FOOTER = [
 ];
 
 export default function Closing() {
+  // news: the photos develop, from blurred and grey to sharp and in colour
+  const newsRef = useInView<HTMLElement>(
+    (el) => {
+      const tl = timeline();
+      signal(tl, el, 0);
+      fade(tl, q(el, '[data-anim="fade"]'), 250);
+      fade(tl, q(el, '[data-anim="card"]'), 500, 150);
+      develop(tl, q(el, '[data-anim="develop"]'), 550, 150);
+      return () => tl.revert();
+    },
+    { threshold: 0.15 },
+  );
+  // contact: the block opens from a line of light, like a link coming up
+  const ctaRef = useInView<HTMLDivElement>(
+    (el) => {
+      const tl = timeline();
+      power(tl, q(el, '[data-anim="power"]'), 0);
+      fade(tl, q(el, '[data-anim="cta"]'), 600, 120);
+      return () => tl.revert();
+    },
+    { threshold: 0.3 },
+  );
+
   return (
     <>
-      <section id="news" className="soft sec">
+      <section ref={newsRef} id="news" className="soft relative sec">
+        <Signal />
         <div className="container-x">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="eyebrow">News</p>
-              <h2 className="h-section mt-4">Latest from LiveTelco</h2>
+              <p data-anim="fade" className="eyebrow">
+                News
+              </p>
+              <h2 data-anim="fade" className="h-section mt-4">
+                Latest from LiveTelco
+              </h2>
             </div>
-            <a href="#news" className="link text-sm">
-              All news and references →
+            <a href="#news" data-anim="fade" className="link text-sm">
+              All news and references
             </a>
           </div>
           <div className="mt-12 grid gap-6 md:grid-cols-3">
             {NEWS.map((n) => (
               <article
                 key={n.title}
+                data-anim="card"
                 className="card card-hover group flex flex-col overflow-hidden"
               >
-                <div className="relative aspect-[16/9] overflow-hidden bg-[#0b1220]">
+                <div
+                  data-anim="develop"
+                  className="relative aspect-[16/9] overflow-hidden bg-[#0b1220]"
+                >
                   <Image
                     src={n.img}
                     alt=""
@@ -72,8 +107,8 @@ export default function Closing() {
                   <div className="text-xs text-muted">
                     <span className="font-semibold text-accent-ink">
                       {n.tag}
-                    </span>{" "}
-                    · {n.date}
+                    </span>
+                    <span className="ml-3">{n.date}</span>
                   </div>
                   <h3 className="mt-2 text-lg font-semibold leading-snug">
                     {n.title}
@@ -81,7 +116,7 @@ export default function Closing() {
                   <p className="mt-2 text-sm leading-relaxed text-muted">
                     {n.body}
                   </p>
-                  <span className="link mt-auto pt-5 text-sm">Read more →</span>
+                  <span className="link mt-auto pt-5 text-sm">Read more</span>
                 </div>
               </article>
             ))}
@@ -90,17 +125,25 @@ export default function Closing() {
       </section>
 
       <section id="quote" className="soft pb-24">
-        <div className="container-x">
-          <div className="dark grid items-center gap-8 rounded-2xl px-8 py-12 sm:px-14 sm:py-16 lg:grid-cols-[1.4fr_1fr]">
+        <div ref={ctaRef} className="container-x">
+          <div
+            data-anim="power"
+            className="dark grid items-center gap-8 rounded-2xl px-8 py-12 sm:px-14 sm:py-16 lg:grid-cols-[1.4fr_1fr]"
+          >
             <div>
-              <h2 className="h-section">Looking for a ground station site?</h2>
-              <p className="lead mt-4 max-w-xl">
+              <h2 data-anim="cta" className="h-section">
+                Looking for a ground station site?
+              </h2>
+              <p data-anim="cta" className="lead mt-4 max-w-xl">
                 Share your target countries and requirements. We reply with
                 available teleports, site documentation, timelines and a
                 proposal.
               </p>
             </div>
-            <div className="flex flex-wrap gap-3 lg:justify-end">
+            <div
+              data-anim="cta"
+              className="flex flex-wrap gap-3 lg:justify-end"
+            >
               <a
                 href="mailto:contact@livetelco.com"
                 className="btn btn-primary"

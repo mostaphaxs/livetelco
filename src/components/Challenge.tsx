@@ -1,5 +1,9 @@
 "use client";
 
+import Signal from "./Signal";
+import { useInView } from "@/lib/motion";
+import { fade, q, scan, signal, timeline } from "@/lib/reveal";
+
 // Building your own gateway vs. colocating at a LiveTelco teleport.
 const ROWS: { topic: string; diy: string; lt: string }[] = [
   {
@@ -67,23 +71,41 @@ const CHECK = (
 );
 
 export default function Challenge() {
+  // the signal crosses, then the comparison is scanned row by row
+  const ref = useInView<HTMLElement>(
+    (el) => {
+      const tl = timeline();
+      signal(tl, el, 0);
+      fade(tl, q(el, '[data-anim="fade"]'), 250);
+      scan(tl, q(el, '[data-anim="scan"]'), 700, 110);
+      return () => tl.revert();
+    },
+    { threshold: 0.15 },
+  );
+
   return (
-    <section className="sec">
+    <section ref={ref} className="relative sec">
+      <Signal />
       <div className="container-x">
         <div className="max-w-2xl">
-          <p className="eyebrow">The challenge</p>
-          <h2 className="h-section mt-4">
+          <p data-anim="fade" className="eyebrow">
+            The challenge
+          </p>
+          <h2 data-anim="fade" className="h-section mt-4">
             Building a ground station takes years. Ours are ready now.
           </h2>
-          <p className="lead mt-5">
+          <p data-anim="fade" className="lead mt-5">
             Every new country is a legal, technical and political project before
             the first link. We have already done that work, site by site.
           </p>
         </div>
 
-        <div className="card mt-14 overflow-hidden">
+        <div data-anim="fade" className="card mt-14 overflow-hidden">
           {/* header */}
-          <div className="grid grid-cols-[1fr] border-b border-line md:grid-cols-[0.8fr_1fr_1fr]">
+          <div
+            data-anim="scan"
+            className="grid grid-cols-[1fr] border-b border-line md:grid-cols-[0.8fr_1fr_1fr]"
+          >
             <div className="hidden px-6 py-5 md:block" />
             <div className="hidden px-6 py-5 text-sm font-semibold text-muted md:block">
               Building your own gateway
@@ -96,6 +118,7 @@ export default function Challenge() {
           {ROWS.map((r, i) => (
             <div
               key={r.topic}
+              data-anim="scan"
               className={`grid md:grid-cols-[0.8fr_1fr_1fr] ${i < ROWS.length - 1 ? "border-b border-line" : ""}`}
             >
               <div className="px-6 pt-5 font-display font-semibold text-heading md:py-5">

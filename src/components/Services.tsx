@@ -2,6 +2,9 @@
 
 import Image from "next/image";
 import type { ReactNode } from "react";
+import Signal from "./Signal";
+import { useInView } from "@/lib/motion";
+import { draw, fade, power, q, signal, timeline } from "@/lib/reveal";
 
 const I = (d: string) => (
   <svg
@@ -14,6 +17,7 @@ const I = (d: string) => (
     strokeLinecap="round"
     strokeLinejoin="round"
     aria-hidden="true"
+    data-anim="draw"
   >
     <path d={d} />
   </svg>
@@ -49,24 +53,45 @@ const SERVICES: { title: string; body: string; icon: ReactNode }[] = [
 ];
 
 export default function Services() {
+  // the signal crosses, the colocation illustration switches on like a screen,
+  // then the service cards appear and their icons draw themselves
+  const ref = useInView<HTMLElement>(
+    (el) => {
+      const tl = timeline();
+      signal(tl, el, 0);
+      fade(tl, q(el, '[data-anim="fade"]'), 250);
+      power(tl, q(el, '[data-anim="power"]'), 700);
+      fade(tl, q(el, '[data-anim="card"]'), 1000, 110);
+      draw(tl, q(el, '[data-anim="draw"]'), 1150, 140);
+      return () => tl.revert();
+    },
+    { threshold: 0.12 },
+  );
+
   return (
-    <section id="services" className="soft sec">
+    <section ref={ref} id="services" className="soft relative sec">
+      <Signal />
       <div className="container-x">
         <div className="grid items-end gap-6 lg:grid-cols-[1.2fr_1fr]">
           <div>
-            <p className="eyebrow">Services</p>
-            <h2 className="h-section mt-4">
+            <p data-anim="fade" className="eyebrow">
+              Services
+            </p>
+            <h2 data-anim="fade" className="h-section mt-4">
               A facility provider, not an antenna operator.
             </h2>
           </div>
-          <p className="lead max-w-md lg:justify-self-end">
+          <p data-anim="fade" className="lead max-w-md lg:justify-self-end">
             We provide everything around the antenna. You keep full control of
             your antennas and your network.
           </p>
         </div>
 
         {/* featured: colocation */}
-        <article className="card mt-14 grid overflow-hidden lg:grid-cols-[1fr_1.15fr]">
+        <article
+          data-anim="fade"
+          className="card mt-14 grid overflow-hidden lg:grid-cols-[1fr_1.15fr]"
+        >
           <div className="p-8 sm:p-10">
             <h3 className="text-2xl font-semibold">Colocation</h3>
             <p className="mt-3 leading-relaxed text-muted">
@@ -93,10 +118,13 @@ export default function Services() {
               </div>
             </dl>
             <a href="#quote" className="link mt-8 inline-block text-sm">
-              Ask for availability →
+              Ask for availability
             </a>
           </div>
-          <div className="relative min-h-[260px] bg-[#0b1220]">
+          <div
+            data-anim="power"
+            className="relative min-h-[260px] bg-[#0b1220]"
+          >
             <Image
               src="/media/scenes/coloc.webp"
               alt="A shared teleport with several operators next to a dedicated teleport for one operator"
@@ -109,7 +137,11 @@ export default function Services() {
 
         <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {SERVICES.map((s) => (
-            <article key={s.title} className="card card-hover p-7">
+            <article
+              key={s.title}
+              data-anim="card"
+              className="card card-hover p-7"
+            >
               <div className="grid h-11 w-11 place-items-center rounded-lg bg-accent/10 text-accent-ink">
                 {s.icon}
               </div>

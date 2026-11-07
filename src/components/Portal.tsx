@@ -1,5 +1,9 @@
 "use client";
 
+import Signal from "./Signal";
+import { useInView } from "@/lib/motion";
+import { count, fade, power, q, signal, timeline } from "@/lib/reveal";
+
 const FEATURES = [
   ["Power and costs", "Allocation and consumption per site."],
   ["Visits", "Requests and the gate log."],
@@ -21,38 +25,60 @@ const SITES = [
 ];
 
 export default function Portal() {
+  // the dashboard boots: the screen switches on, the figures count up, the rows load
+  const ref = useInView<HTMLElement>(
+    (el) => {
+      const tl = timeline();
+      signal(tl, el, 0);
+      fade(tl, q(el, '[data-anim="fade"]'), 250, 70);
+      power(tl, q(el, '[data-anim="power"]'), 500);
+      count(tl, q(el, "[data-count]"), 1100);
+      fade(tl, q(el, '[data-anim="row"]'), 1200, 160);
+      return () => tl.revert();
+    },
+    { threshold: 0.2 },
+  );
+
   return (
-    <section id="portal" className="sec">
+    <section ref={ref} id="portal" className="relative sec">
+      <Signal />
       <div className="container-x grid items-center gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
         <div>
-          <p className="eyebrow">Client portal</p>
-          <h2 className="h-section mt-4">Every teleport, followed live.</h2>
-          <p className="lead mt-5">
+          <p data-anim="fade" className="eyebrow">
+            Client portal
+          </p>
+          <h2 data-anim="fade" className="h-section mt-4">
+            Every teleport, followed live.
+          </h2>
+          <p data-anim="fade" className="lead mt-5">
             Each operator sees its own sites, with two-step sign-in and access
             managed by the operator&apos;s own admin.
           </p>
           <dl className="mt-8 grid gap-x-8 gap-y-5 sm:grid-cols-2">
             {FEATURES.map(([k, v]) => (
-              <div key={k}>
+              <div key={k} data-anim="fade">
                 <dt className="font-semibold text-heading">{k}</dt>
                 <dd className="mt-0.5 text-sm text-muted">{v}</dd>
               </div>
             ))}
           </dl>
-          <a href="#quote" className="btn btn-primary mt-10">
+          <a href="#quote" data-anim="fade" className="btn btn-primary mt-10">
             Sign in to the portal
           </a>
         </div>
 
         {/* simplified product screenshot */}
         <figure>
-          <div className="overflow-hidden rounded-xl border border-line bg-white shadow-[0_40px_80px_-40px_rgba(11,22,38,.35)]">
+          <div
+            data-anim="power"
+            className="overflow-hidden rounded-xl border border-line bg-white shadow-[0_40px_80px_-40px_rgba(11,22,38,.35)]"
+          >
             <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
               <div className="flex items-center gap-2 text-sm">
                 <span className="font-display font-semibold text-heading">
                   Overview
                 </span>
-                <span className="text-muted">· Demo Operator</span>
+                <span className="text-muted">Demo Operator</span>
               </div>
               <span className="rounded-md bg-soft px-2 py-1 text-xs text-muted">
                 Last 30 days
@@ -66,7 +92,10 @@ export default function Portal() {
               ].map(([k, v]) => (
                 <div key={k} className="px-5 py-4">
                   <div className="text-xs text-muted">{k}</div>
-                  <div className="mt-1 font-display text-lg font-semibold text-heading sm:text-xl">
+                  <div
+                    data-count
+                    className="mt-1 font-display text-lg font-semibold text-heading sm:text-xl"
+                  >
                     {v}
                   </div>
                 </div>
@@ -85,7 +114,7 @@ export default function Portal() {
               </thead>
               <tbody className="divide-y divide-line border-t border-line">
                 {SITES.map((s) => (
-                  <tr key={s.code}>
+                  <tr key={s.code} data-anim="row">
                     <td className="px-5 py-3.5 font-medium text-heading">
                       {s.code}
                     </td>
