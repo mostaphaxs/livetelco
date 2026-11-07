@@ -1,73 +1,25 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { animate, createTimeline, stagger } from "animejs";
-import { loadLandDots } from "@/lib/landDots";
-import { KIND_META, SITES, type SiteKind } from "@/lib/locations";
-import { useInView } from "@/lib/motion";
+import { animate, stagger } from "animejs";
 
-const BOX = { lonMin: -22, lonMax: 75, latMin: -14, latMax: 64 };
-const ASPECT = ((BOX.lonMax - BOX.lonMin) * Math.cos((25 * Math.PI) / 180)) / (BOX.latMax - BOX.latMin);
-const px = (lon: number) => ((lon - BOX.lonMin) / (BOX.lonMax - BOX.lonMin)) * 100;
-const py = (lat: number) => ((BOX.latMax - lat) / (BOX.latMax - BOX.latMin)) * 100;
+import { useEffect, useMemo, useRef, useState } from "react";
+import Globe from "./globe/Globe";
+import { prefersReducedMotion } from "@/lib/motion";
+import { KIND_META, SITES, type Site, type SiteKind } from "@/lib/locations";
 
 type Filter = "all" | SiteKind;
 
-function DotMap() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const c = canvasRef.current!;
-    let dots: Float32Array | null = null;
-    const draw = () => {
-      if (!dots) return;
-      const dpr = Math.min(devicePixelRatio || 1, 2);
-      const w = c.clientWidth;
-      const h = c.clientHeight;
-      c.width = w * dpr;
-      c.height = h * dpr;
-      const ctx = c.getContext("2d")!;
-      ctx.scale(dpr, dpr);
-      const r = Math.max(1, w / 520);
-      for (let i = 0; i < dots.length; i += 2) {
-        const lat = dots[i];
-        const lon = dots[i + 1];
-        if (lon < BOX.lonMin || lon > BOX.lonMax || lat < BOX.latMin || lat > BOX.latMax) continue;
-        const x = (px(lon) / 100) * w;
-        const y = (py(lat) / 100) * h;
-        // brighten towards the core region (Gulf / Egypt)
-        const d = Math.hypot(lon - 40, lat - 24);
-        ctx.fillStyle = `rgba(125, 211, 252, ${0.12 + Math.max(0, 1 - d / 55) * 0.35})`;
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    };
-    loadLandDots().then((d) => {
-      dots = d;
-      draw();
-    });
-    const ro = new ResizeObserver(draw);
-    ro.observe(c);
-    return () => ro.disconnect();
-  }, []);
-  return <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden="true" />;
-}
+const siteCount = (country: string) =>
+  SITES.filter((s) => s.country === country && s.kind !== "future").length;
 
 export default function Network() {
   const [filter, setFilter] = useState<Filter>("all");
-  const [active, setActive] = useState<string | null>(null);
-  const mapRef = useRef<HTMLDivElement>(null);
+  const [hover, setHover] = useState<string | null>(null);
+  const [focus, setFocus] = useState<Site | null>(null);
+  const [ready, setReady] = useState(false);
   const listRef = useRef<HTMLUListElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const first = useRef(true);
-
-  const ref = useInView<HTMLDivElement>((el) => {
-    const tl = createTimeline({ defaults: { ease: "outExpo" } })
-      .add(el.querySelectorAll("[data-head]"), { opacity: [0, 1], translateY: [30, 0], delay: stagger(100), duration: 1000 })
-      .add(el.querySelector("[data-map]")!, { opacity: [0, 1], scale: [0.96, 1], duration: 1400 }, 150)
-      .add(el.querySelectorAll("[data-pin]"), { opacity: [0, 1], scale: [0, 1], delay: stagger(45, { from: "center" }), duration: 900, ease: "outBack(2.5)" }, 600)
-      .add(el.querySelectorAll("[data-li]"), { opacity: [0, 1], translateX: [20, 0], delay: stagger(25), duration: 700 }, 700);
-    return () => tl.revert();
-  }, { threshold: 0.15 });
 
   // re-animate the list whenever the filter changes
   useEffect(() => {
@@ -76,39 +28,74 @@ export default function Network() {
       return;
     }
     const items = listRef.current?.querySelectorAll("[data-li]");
-    const pins = mapRef.current?.querySelectorAll("[data-pin]:not([data-dim='true'])");
-    const a = items && animate(items, { opacity: [0, 1], translateX: [16, 0], delay: stagger(30), duration: 600, ease: "outExpo" });
-    const b = pins && animate(pins, { scale: [0.4, 1], delay: stagger(30), duration: 700, ease: "outBack(3)" });
+    const a =
+      items &&
+      animate(items, {
+        opacity: [0, 1],
+        delay: stagger(15),
+        duration: 400,
+        ease: "outCubic",
+      });
     return () => {
       a?.revert();
-      b?.revert();
     };
   }, [filter]);
 
-  const shown = useMemo(() => SITES.filter((s) => filter === "all" || s.kind === filter), [filter]);
+  // soft cross-fade of the site card each time the globe moves to another site
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el || prefersReducedMotion()) return;
+    const a = animate(el.children, {
+      opacity: [0, 1],
+      translateY: [6, 0],
+      delay: stagger(50),
+      duration: 500,
+      ease: "outCubic",
+    });
+    return () => {
+      a.revert();
+    };
+  }, [focus]);
+
+  // sites grouped by country, in the order they first appear
+  const groups = useMemo(() => {
+    const m = new Map<string, Site[]>();
+    SITES.filter((s) => filter === "all" || s.kind === filter).forEach((s) =>
+      m.set(s.country, [...(m.get(s.country) ?? []), s]),
+    );
+    return [...m.entries()];
+  }, [filter]);
   const tabs: Filter[] = ["all", "teleport", "tower", "future"];
 
   return (
-    <section id="network" className="relative overflow-hidden bg-bg-2 py-28 sm:py-36">
-      <div ref={ref} className="container-x">
+    <section id="network" className="dark relative overflow-hidden sec">
+      <div className="container-x">
         <div className="flex flex-wrap items-end justify-between gap-6">
-          <div>
-            <p data-reveal data-head className="eyebrow">
-              The network
-            </p>
-            <h2 data-reveal data-head className="h-display mt-5 text-[clamp(2.2rem,5vw,4rem)]">
-              14 locations. <span className="text-gradient">13 more coming.</span>
+          <div className="max-w-2xl">
+            <p className="eyebrow">Our teleports</p>
+            <h2 className="h-section mt-4">
+              14 locations in 7 countries. 13 more on the way.
             </h2>
+            <p className="lead mt-4">
+              Every plot is owned by LiveTelco or held on a long-term lease.
+              Drag the globe, or pick a site in the list.
+            </p>
           </div>
-          <div data-reveal data-head role="tablist" aria-label="Filter sites" className="glass flex flex-wrap gap-1 rounded-full p-1">
+          <div
+            role="tablist"
+            aria-label="Filter sites"
+            className="flex flex-wrap gap-1 rounded-lg border border-line p-1"
+          >
             {tabs.map((t) => (
               <button
                 key={t}
                 role="tab"
                 aria-selected={filter === t}
                 onClick={() => setFilter(t)}
-                className={`rounded-full px-4 py-2 text-sm transition-colors ${
-                  filter === t ? "bg-white text-[#04070f]" : "text-muted hover:text-ink"
+                className={`rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors ${
+                  filter === t
+                    ? "bg-white text-[#0b1626]"
+                    : "text-muted hover:text-white"
                 }`}
               >
                 {t === "all" ? "All" : KIND_META[t].label}
@@ -117,72 +104,120 @@ export default function Network() {
           </div>
         </div>
 
-        <div className="mt-12 grid gap-6 lg:grid-cols-[1fr_300px]">
-          <div
-            data-reveal
-            data-map
-            ref={mapRef}
-            className="relative w-full overflow-hidden rounded-3xl border border-line bg-[#050b18]"
-            style={{ aspectRatio: ASPECT }}
-          >
-            <DotMap />
-            {SITES.map((s) => {
-              const dim = filter !== "all" && s.kind !== filter;
-              const on = active === s.city;
-              const color = KIND_META[s.kind].color;
-              return (
-                <button
-                  key={s.city}
-                  data-pin
-                  data-dim={dim}
-                  onMouseEnter={() => setActive(s.city)}
-                  onMouseLeave={() => setActive(null)}
-                  onFocus={() => setActive(s.city)}
-                  onBlur={() => setActive(null)}
-                  aria-label={`${s.city}, ${s.country} — ${KIND_META[s.kind].label}`}
-                  className="absolute -translate-x-1/2 -translate-y-1/2 p-2 transition-opacity duration-500"
-                  style={{ left: `${px(s.lon)}%`, top: `${py(s.lat)}%`, opacity: dim ? 0.12 : 1, zIndex: on ? 20 : 1 }}
-                >
-                  <span className="relative block h-2.5 w-2.5 rounded-full" style={{ background: color, boxShadow: `0 0 14px ${color}` }}>
-                    {s.kind !== "future" && (
-                      <span className="absolute inset-0 animate-ping rounded-full opacity-60" style={{ background: color }} />
-                    )}
-                  </span>
-                  <span
-                    className={`pointer-events-none absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap rounded-md border border-line bg-[#04070f]/90 px-2 py-1 text-left font-mono text-[0.65rem] backdrop-blur transition-all duration-300 ${
-                      on ? "translate-y-0 opacity-100" : "-translate-y-1 opacity-0"
-                    }`}
-                  >
-                    <span className="block text-ink">{s.city}</span>
-                    <span className="block text-muted">{s.country}</span>
-                  </span>
-                </button>
-              );
-            })}
-            <div className="pointer-events-none absolute bottom-4 left-4 font-mono text-[0.65rem] uppercase tracking-[0.2em] text-muted/70">
-              Middle East · Africa · Europe
+        <div className="mt-10 grid items-center gap-8 lg:grid-cols-[1fr_340px]">
+          {/* 3D globe with satellites, uplinks and the guided tour */}
+          <div className="relative mx-auto aspect-square w-full max-w-[640px]">
+            <div
+              className={`absolute inset-[-12%] transition-opacity duration-1000 ${ready ? "opacity-100" : "opacity-0"}`}
+            >
+              <Globe
+                onReady={() => setReady(true)}
+                onFocusSite={setFocus}
+                focusCity={hover}
+              />
             </div>
+            {focus && (
+              <div
+                ref={cardRef}
+                key={focus.city}
+                className="glass pointer-events-none absolute bottom-0 left-0 hidden w-64 rounded-xl p-4 shadow-2xl sm:block"
+              >
+                <div className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-2 font-medium text-white/80">
+                    <span
+                      className="h-2 w-2 rounded-full"
+                      style={{
+                        background:
+                          focus.kind === "future"
+                            ? KIND_META.future.color
+                            : "#2fd39a",
+                      }}
+                    />
+                    {focus.kind === "future" ? "Coming soon" : "Operational"}
+                  </span>
+                  <span className="text-muted">
+                    {KIND_META[focus.kind].label.replace(/s$/, "")}
+                  </span>
+                </div>
+                <div className="mt-3 font-display text-xl font-semibold text-white">
+                  {focus.city}
+                </div>
+                <div className="text-sm text-muted">{focus.country}</div>
+                <div className="mt-4 grid grid-cols-2 gap-3 border-t border-white/10 pt-3 text-xs">
+                  <div>
+                    <div className="text-muted">Sites in country</div>
+                    <div className="mt-0.5 font-semibold text-white">
+                      {siteCount(focus.country)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-muted">Colocation</div>
+                    <div className="mt-0.5 font-semibold text-white">
+                      Shared · Dedicated
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
-          <ul ref={listRef} className="glass max-h-[520px] space-y-0.5 overflow-y-auto rounded-3xl p-3 lg:max-h-none" aria-label="Sites">
-            {shown.map((s) => (
-              <li key={s.city} data-reveal data-li>
-                <button
-                  onMouseEnter={() => setActive(s.city)}
-                  onMouseLeave={() => setActive(null)}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition-colors ${
-                    active === s.city ? "bg-white/[0.07]" : "hover:bg-white/[0.04]"
-                  }`}
+          <div className="relative z-10">
+            <ul
+              ref={listRef}
+              className="max-h-[520px] overflow-y-auto rounded-xl border border-line bg-[#0a1626]/80 backdrop-blur"
+              aria-label="Sites by country"
+            >
+              {groups.map(([country, list]) => (
+                <li
+                  key={country}
+                  data-li
+                  className="border-b border-line px-4 py-3.5 last:border-b-0"
                 >
-                  <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: KIND_META[s.kind].color }} />
-                  <span className="text-ink">{s.city}</span>
-                  <span className="ml-auto text-xs text-muted">{s.country}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-sm font-semibold text-white">
+                      {country}
+                    </span>
+                    <span className="text-xs text-muted">
+                      {list.length} {list.length > 1 ? "sites" : "site"}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {list.map((s) => (
+                      <button
+                        key={s.city}
+                        onMouseEnter={() => setHover(s.city)}
+                        onFocus={() => setHover(s.city)}
+                        onClick={() => setHover(s.city)}
+                        className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors ${
+                          focus?.city === s.city
+                            ? "border-white/50 bg-white/10 text-white"
+                            : "border-line text-[#c3cddb] hover:border-white/30"
+                        }`}
+                      >
+                        <span
+                          className="h-1.5 w-1.5 rounded-full"
+                          style={{ background: KIND_META[s.kind].color }}
+                        />
+                        {s.city}
+                      </button>
+                    ))}
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <ul className="mt-4 flex flex-wrap gap-4 text-xs text-muted">
+              {(["teleport", "tower", "future"] as const).map((k) => (
+                <li key={k} className="flex items-center gap-2">
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{ background: KIND_META[k].color }}
+                  />
+                  {KIND_META[k].label}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-        <p className="mt-6 text-sm text-muted">Every plot is owned by LiveTelco or held on a long-term lease.</p>
       </div>
     </section>
   );

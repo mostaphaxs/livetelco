@@ -1,9 +1,9 @@
 import Nav from "@/components/Nav";
 import Hero from "@/components/Hero";
-import Stats from "@/components/Stats";
-import Film from "@/components/Film";
+import FilmModal from "@/components/FilmModal";
 import Challenge from "@/components/Challenge";
 import Services from "@/components/Services";
+import HowItWorks from "@/components/HowItWorks";
 import Compliance from "@/components/Compliance";
 import Network from "@/components/Network";
 import Portal from "@/components/Portal";
@@ -15,15 +15,15 @@ export default function Home() {
       <Nav />
       <main>
         <Hero />
-        <Stats />
-        <Film />
         <Challenge />
         <Services />
+        <HowItWorks />
         <Compliance />
         <Network />
         <Portal />
         <Closing />
       </main>
+      <FilmModal />
     </>
   );
 }

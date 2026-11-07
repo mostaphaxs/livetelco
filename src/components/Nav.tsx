@@ -9,7 +9,7 @@ type Item = { href: string; label: string; children?: { href: string; label: str
 // Same structure and wording as the livetelco.com header.
 const LINKS: Item[] = [
   { href: "#top", label: "Home" },
-  { href: "#film", label: "About Us" },
+  { href: "#how", label: "About Us" },
   {
     href: "#services",
     label: "Services",
@@ -61,7 +61,7 @@ function Dropdown({ item }: { item: Item }) {
       </a>
       {open && (
         <div ref={panel} className="absolute left-1/2 top-full w-64 -translate-x-1/2 pt-4">
-          <div className="rounded-md border border-white/10 bg-[#192028] p-2 shadow-[0_30px_60px_-20px_rgba(0,0,0,.6)]">
+          <div className="rounded-md border border-white/10 bg-[#0a1626] p-2 shadow-[0_30px_60px_-20px_rgba(0,0,0,.6)]">
             {item.children!.map((c) => (
               <a key={c.label} href={c.href} className="block rounded px-3 py-2 text-[15px] font-medium text-white/80 transition-colors hover:bg-white/5 hover:text-white">
                 {c.label}
@@ -78,6 +78,11 @@ export default function Nav() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // tells the safety timer in layout.tsx that the app started (reveal animations will run)
+  useEffect(() => {
+    (window as unknown as { __ltReady?: boolean }).__ltReady = true;
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -111,16 +116,16 @@ export default function Nav() {
       <div
         className={`border-b transition-[background,border-color,box-shadow] duration-500 ${
           scrolled
-            ? "border-white/10 bg-[#192028]/95 shadow-[0_10px_40px_-10px_rgba(0,0,0,.6)] backdrop-blur-md"
-            : "border-white/5 bg-[#192028]"
+            ? "border-white/10 bg-[#0a1626]/95 shadow-[0_10px_40px_-10px_rgba(0,0,0,.6)] backdrop-blur-md"
+            : "border-white/10 bg-[#0a1626]"
         }`}
       >
-        <nav className="container-x flex h-[88px] items-center justify-between gap-6" aria-label="Main">
+        <nav className="container-x flex h-[72px] items-center justify-between gap-10" aria-label="Main">
           <a href="#top" aria-label="LiveTelco home" className="shrink-0">
-            <Logo height={46} />
+            <Logo height={40} />
           </a>
 
-          <ul className="hidden items-center gap-1 xl:flex">
+          <ul className="hidden items-center gap-2 xl:flex">
             {LINKS.map((l) =>
               l.children ? (
                 <Dropdown key={l.label} item={l} />
@@ -134,7 +139,7 @@ export default function Nav() {
             )}
           </ul>
 
-          <div className="hidden items-center gap-3 xl:flex">
+          <div className="hidden items-center gap-2.5 xl:flex">
             <a href="#portal" className="btn-site btn-site-outline">
               Client Portal
             </a>
@@ -158,7 +163,7 @@ export default function Nav() {
       </div>
 
       {open && (
-        <div ref={menuRef} className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-[#192028] px-6 pb-10 pt-28 xl:hidden">
+        <div ref={menuRef} className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-[#0a1626] px-6 pb-10 pt-28 xl:hidden">
           {LINKS.map((l) => (
             <a
               key={l.label}
