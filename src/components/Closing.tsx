@@ -3,26 +3,31 @@
 import Image from "next/image";
 import Logo from "./Logo";
 import Signal from "./Signal";
+import CountryLink from "./CountryLink";
+import { SITES } from "@/lib/locations";
 import { useInView } from "@/lib/motion";
 import { develop, fade, power, q, signal, timeline } from "@/lib/reveal";
 
 const NEWS = [
   {
-    date: "30 Oct 2026",
+    date: "2026-10-30",
+    href: "https://livetelco.com/references/#post-2026-10-30-iso-iec-27001-renewed-for-a-2nd-year",
     tag: "Certification",
     title: "ISO/IEC 27001 renewed for a second year",
     body: "LiveTelco passed its ISO/IEC 27001:2022 certification audit for the second consecutive year.",
     img: "/media/scenes/security.webp",
   },
   {
-    date: "22 Sep 2026",
+    date: "2026-09-22",
+    href: "https://livetelco.com/references/#post-2026-09-22-livetelco-egypt-one-year-in-operation",
     tag: "Egypt",
     title: "LiveTelco Egypt: one year in operation",
     body: "Back from Egypt after meetings with the local team, suppliers, customers, partners and officials.",
     img: "/media/scenes/land.webp",
   },
   {
-    date: "2 Sep 2026",
+    date: "2026-09-02",
+    href: "https://livetelco.com/references/#post-2026-09-02-speaking-at-itw-africa-datacloud-africa",
     tag: "Events",
     title: "Speaking at ITW Africa & Datacloud Africa",
     body: "Partner Yves Nahas speaks in Nairobi on LEO satellite operators and teleports.",
@@ -30,16 +35,38 @@ const NEWS = [
   },
 ];
 
-const FOOTER = [
+// news dates: ISO in the data, formatted for display (UTC, so server and browser agree)
+const dateFmt = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+
+// on-page sections where this page covers the topic, livetelco.com pages otherwise
+const SITE = "https://livetelco.com";
+const FOOTER: { title: string; links: [string, string][] }[] = [
   {
     title: "Company",
-    links: ["About us", "References", "Careers", "Code of conduct"],
+    links: [
+      ["About us", "#how"],
+      ["References", `${SITE}/references/`],
+      ["Careers", `${SITE}/careers/`],
+      ["Code of conduct", `${SITE}/code-of-conduct/`],
+    ],
   },
   {
     title: "Services",
-    links: ["Colocation", "Security", "Microwave", "Resellers"],
+    links: [
+      ["Colocation", "#services"],
+      ["Security", "#compliance"],
+      ["Microwave", `${SITE}/microwave/`],
+      ["Resellers", `${SITE}/resellers/`],
+    ],
   },
-  { title: "Teleports", links: ["Our teleports", "Client portal", "Contact"] },
+  {
+    title: "Teleports",
+    links: [
+      ["Our teleports", "#network"],
+      ["Client portal", `${SITE}/portal/`],
+      ["Contact", "#quote"],
+    ],
+  },
 ];
 
 export default function Closing() {
@@ -78,7 +105,7 @@ export default function Closing() {
                 Latest from LiveTelco
               </h2>
             </div>
-            <a href="#news" data-anim="fade" className="link text-sm">
+            <a href={`${SITE}/references/`} data-anim="fade" className="link text-sm">
               All news and references
             </a>
           </div>
@@ -87,7 +114,7 @@ export default function Closing() {
               <article
                 key={n.title}
                 data-anim="card"
-                className="card card-hover group flex flex-col overflow-hidden"
+                className="card card-hover group relative flex flex-col overflow-hidden has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-4 has-[a:focus-visible]:outline-[var(--accent-ink)]"
               >
                 <div
                   data-anim="develop"
@@ -103,18 +130,28 @@ export default function Closing() {
                 </div>
                 <div className="flex flex-1 flex-col p-6">
                   <div className="text-xs text-muted">
-                    <span className="font-semibold text-accent-ink">
-                      {n.tag}
-                    </span>
-                    <span className="ml-3">{n.date}</span>
+                    {/* a country tag shows that country on the globe */}
+                    {SITES.some((s) => s.country === n.tag) ? (
+                      <CountryLink country={n.tag} className="font-semibold text-accent-ink" />
+                    ) : (
+                      <span className="font-semibold text-accent-ink">{n.tag}</span>
+                    )}
+                    <time dateTime={n.date} className="ml-3">
+                      {dateFmt.format(new Date(n.date))}
+                    </time>
                   </div>
                   <h3 className="mt-2 text-lg font-semibold leading-snug">
-                    {n.title}
+                    {/* the whole card is clickable through this link (after:inset-0) */}
+                    <a href={n.href} className="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none">
+                      {n.title}
+                    </a>
                   </h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted">
                     {n.body}
                   </p>
-                  <span className="link mt-auto pt-5 text-sm">Read more</span>
+                  <span aria-hidden="true" className="link mt-auto pt-5 text-sm group-hover:underline group-hover:underline-offset-4">
+                    Read more
+                  </span>
                 </div>
               </article>
             ))}
@@ -186,10 +223,10 @@ export default function Closing() {
               <div key={col.title}>
                 <div className="font-semibold text-white">{col.title}</div>
                 <ul className="mt-4 space-y-2.5">
-                  {col.links.map((l) => (
-                    <li key={l}>
-                      <a href="#top" className="text-muted hover:text-white">
-                        {l}
+                  {col.links.map(([label, href]) => (
+                    <li key={label}>
+                      <a href={href} className="text-muted transition-colors hover:text-white">
+                        {label}
                       </a>
                     </li>
                   ))}

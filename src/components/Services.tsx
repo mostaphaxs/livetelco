@@ -3,69 +3,51 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
 import Signal from "./Signal";
+import {
+  AcquisitionArt,
+  ConnectivityArt,
+  SecurityArt,
+  TechnicalArt,
+} from "./ServiceArt";
 import { useInView } from "@/lib/motion";
-import { draw, fade, power, q, signal, timeline } from "@/lib/reveal";
+import { fade, power, q, signal, timeline, trace } from "@/lib/reveal";
 
-const I = (d: string) => (
-  <svg
-    width="22"
-    height="22"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.6"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-    data-anim="draw"
-  >
-    <path d={d} />
-  </svg>
-);
-
-const SERVICES: { title: string; body: string; icon: ReactNode }[] = [
+// each service is drawn, in the film's line style, by the same signal stroke as the logo
+const SERVICES: { title: string; body: string; art: ReactNode }[] = [
   {
     title: "Security",
     body: "Premium with 24/7 guards, or Standard with automated access control, CCTV and NOC monitoring.",
-    icon: I("M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3zM9 12l2 2 4-4"),
+    art: <SecurityArt />,
   },
   {
     title: "Technical services",
     body: "Our teams install and maintain antennas on request — trained by and acting under the guidance of each operator.",
-    icon: I(
-      "M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4 2.5-2.5z",
-    ),
+    art: <TechnicalArt />,
   },
   {
     title: "Site acquisition",
     body: "Need a new country? We find and acquire the land, then handle permits and greenfield construction.",
-    icon: I(
-      "M12 21s-7-6.1-7-11a7 7 0 1 1 14 0c0 4.9-7 11-7 11zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z",
-    ),
+    art: <AcquisitionArt />,
   },
   {
     title: "Connectivity",
     body: "100G+ fibre with redundancy across Tier 1 operators, and 500 kVA+ of power on a 99.5% SLA.",
-    icon: I(
-      "M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M2 9a15 15 0 0 1 20 0M12 19.5h.01",
-    ),
+    art: <ConnectivityArt />,
   },
 ];
 
 export default function Services() {
   // the signal crosses, the colocation illustration switches on like a screen,
-  // then the service cards appear and their icons draw themselves
-  const ref = useInView<HTMLElement>(
-    (el) => {
-      const tl = timeline();
-      signal(tl, el, 0);
-      fade(tl, q(el, '[data-anim="fade"]'), 250);
-      power(tl, q(el, '[data-anim="power"]'), 700);
-      fade(tl, q(el, '[data-anim="card"]'), 1000, 110);
-      draw(tl, q(el, '[data-anim="draw"]'), 1150, 140);
-      return () => tl.revert();
-    },
-  );
+  // then the service cards appear and their drawings are traced in, one after the other
+  const ref = useInView<HTMLElement>((el) => {
+    const tl = timeline();
+    signal(tl, el, 0);
+    fade(tl, q(el, '[data-anim="fade"]'), 250);
+    power(tl, q(el, '[data-anim="power"]'), 700);
+    fade(tl, q(el, '[data-anim="card"]'), 1000, 110);
+    trace(tl, q(el, '[data-anim="trace"]'), 1100, 260);
+    return () => tl.revert();
+  });
 
   return (
     <section ref={ref} id="services" className="soft relative sec">
@@ -92,7 +74,9 @@ export default function Services() {
           className="card mt-14 grid overflow-hidden lg:grid-cols-[1fr_1.15fr]"
         >
           <div className="p-8 sm:p-10">
-            <h3 className="font-display text-2xl font-semibold tracking-[-0.015em]">Colocation</h3>
+            <h3 className="font-display text-2xl font-semibold tracking-[-0.015em]">
+              Colocation
+            </h3>
             <p className="mt-3 leading-relaxed text-muted">
               A fenced antenna area in a shared compound, or a whole teleport
               reserved for you. Power, fibre, shelters and people around your
@@ -139,15 +123,17 @@ export default function Services() {
             <article
               key={s.title}
               data-anim="card"
-              className="card card-hover p-7"
+              className="card card-hover overflow-hidden"
             >
-              <div className="grid h-11 w-11 place-items-center rounded-lg bg-accent/10 text-accent-ink">
-                {s.icon}
+              <div className="aspect-[2/1] border-b border-line bg-[#0b1220] px-3 pt-2">
+                {s.art}
               </div>
-              <h3 className="mt-5 text-lg font-semibold">{s.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted">
-                {s.body}
-              </p>
+              <div className="p-6 pt-5">
+                <h3 className="text-lg font-semibold">{s.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted">
+                  {s.body}
+                </p>
+              </div>
             </article>
           ))}
         </div>

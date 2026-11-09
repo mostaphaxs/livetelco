@@ -17,13 +17,14 @@ export function signal(tl: Timeline, el: Element, at = 0) {
   const head = line.querySelector<HTMLElement>(".signal-head")!;
   tl.add(line, { clipPath: ["inset(0% 100% 0% 0%)", "inset(0% 0% 0% 0%)"], duration: 1000, ease: "inOutCubic" }, at)
     .add(head, { opacity: [0, 1], duration: 120, ease: "linear" }, at)
-    .add(head, { left: ["0%", "100%"], duration: 1000, ease: "inOutCubic" }, at)
+    // transform, not `left`: a layout property would re-lay out the page on every frame
+    .add(head, { translateX: [0, line.offsetWidth], duration: 1000, ease: "inOutCubic" }, at)
     .add(head, { opacity: 0, duration: 250, ease: "linear" }, at + 900);
 }
 
-/** plain fade, staggered (headings, text) */
+/** fade with a small rise, staggered (headings, text): a direction, not "from nowhere" */
 export const fade = (tl: Timeline, els: HTMLElement[], at: number, gap = 80) =>
-  els.length && tl.add(els, { opacity: [0, 1], duration: 700, delay: stagger(gap) }, at);
+  els.length && tl.add(els, { opacity: [0, 1], translateY: [8, 0], duration: 700, delay: stagger(gap) }, at);
 
 /** left-to-right wipe, like a signal crossing the element */
 export const wipe = (tl: Timeline, els: HTMLElement[], at: number, gap = 120, duration = 1100) =>
@@ -38,14 +39,16 @@ export const power = (tl: Timeline, els: HTMLElement[], at: number) =>
   els.length &&
   tl
     .add(els, { opacity: [0, 1], duration: 120, ease: "linear" }, at)
-    .add(els, { scaleY: [0.015, 1], filter: ["brightness(3)", "brightness(1)"], duration: 650, ease: "outExpo" }, at + 120);
+    // transform only: animating a filter on a large picture is expensive
+    .add(els, { scaleY: [0.015, 1], duration: 650, ease: "outExpo" }, at + 120);
 
 /** a photo developing: blurred and grey, then sharp and in colour */
 export const develop = (tl: Timeline, els: HTMLElement[], at: number, gap = 140) =>
   els.length &&
   tl.add(
     els,
-    { opacity: [0, 1], filter: ["blur(16px) grayscale(1) brightness(1.6)", "blur(0px) grayscale(0) brightness(1)"], duration: 1200, ease: "outQuad", delay: stagger(gap) },
+    // light blur (animated blur on big images is costly, Safari especially); ~600 ms after the 1.7× speed-up
+    { opacity: [0, 1], filter: ["blur(6px) grayscale(1)", "blur(0px) grayscale(0)"], duration: 1000, ease: "outQuad", delay: stagger(gap) },
     at
   );
 
@@ -59,6 +62,22 @@ export function draw(tl: Timeline, svgs: HTMLElement[], at: number, gap = 160) {
   tl.add(svgs, { opacity: [0, 1], duration: 1, delay: stagger(gap) }, at);
   const paths = svgs.flatMap((s) => [...s.querySelectorAll<SVGGeometryElement>("path, circle")]);
   tl.add(createDrawable(paths), { draw: ["0 0", "0 1"], duration: 650, ease: "inOutQuad", delay: stagger(gap / 2) }, at);
+}
+
+/**
+ * Line drawings traced in, like the signal drawing the logo in the intro: in each drawing
+ * the faint ground and survey lines go first, then the cyan structure, all strokes at once
+ * with a tight stagger, one drawing after the other.
+ */
+export function trace(tl: Timeline, svgs: HTMLElement[], at: number, gap = 200) {
+  svgs.forEach((svg, i) => {
+    const start = at + i * gap;
+    tl.add(svg, { opacity: [0, 1], duration: 1 }, start);
+    const soft = [...svg.querySelectorAll<SVGGeometryElement>('[data-line="soft"]')];
+    const main = [...svg.querySelectorAll<SVGGeometryElement>('[data-line="main"]')];
+    if (soft.length) tl.add(createDrawable(soft), { draw: ["0 0", "0 1"], duration: 700, ease: "outQuad", delay: stagger(40) }, start);
+    if (main.length) tl.add(createDrawable(main), { draw: ["0 0", "0 1"], duration: 1000, ease: "inOutQuad", delay: stagger(45) }, start + 200);
+  });
 }
 
 /** numbers counting up to their value (keeps decimals, % and suffixes) */

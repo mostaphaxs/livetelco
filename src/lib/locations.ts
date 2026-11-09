@@ -43,6 +43,32 @@ export const SITES: Site[] = [
   { city: "Karachi", country: "Pakistan", lat: 24.86, lon: 67.0, kind: "future" },
 ];
 
+/** IANA time zone per country (one zone each for every country we are in). */
+export const COUNTRY_TZ: Record<string, string> = {
+  "Saudi Arabia": "Asia/Riyadh",
+  UAE: "Asia/Dubai",
+  Egypt: "Africa/Cairo",
+  Nigeria: "Africa/Lagos",
+  Ghana: "Africa/Accra",
+  Cyprus: "Asia/Nicosia",
+  Lebanon: "Asia/Beirut",
+  Morocco: "Africa/Casablanca",
+  Senegal: "Africa/Dakar",
+  Tanzania: "Africa/Dar_es_Salaam",
+  "DR Congo": "Africa/Kinshasa",
+  Norway: "Europe/Oslo",
+  Croatia: "Europe/Zagreb",
+  Pakistan: "Asia/Karachi",
+};
+
+/** Local time at a site, e.g. { time: "14:32", offset: "GMT+2" }. */
+export function siteLocalTime(country: string, now: Date) {
+  const timeZone = COUNTRY_TZ[country] ?? "UTC";
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone, hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZoneName: "shortOffset" }).formatToParts(now);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return { time: `${get("hour")}:${get("minute")}`, offset: get("timeZoneName").replace("GMT", "UTC") || "UTC" };
+}
+
 export const KIND_META: Record<SiteKind, { label: string; color: string; hex: number }> = {
   teleport: { label: "Teleports", color: "#f5a524", hex: 0xf5a524 },
   tower: { label: "Towers", color: "#34d399", hex: 0x34d399 },

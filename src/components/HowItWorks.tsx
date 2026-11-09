@@ -135,11 +135,12 @@ export default function HowItWorks() {
                   ["99.5%", "power SLA"],
                   ["Neutral", "any carrier"],
                 ].map(([v, k]) => (
-                  <div key={k}>
-                    <dt className="font-display text-lg font-semibold text-heading">
+                  <div key={k} className="flex flex-col">
+                    {/* term = label, description = value; the value is shown first */}
+                    <dt className="order-2 text-xs text-muted">{k}</dt>
+                    <dd className="order-1 font-display text-lg font-semibold text-heading">
                       {v}
-                    </dt>
-                    <dd className="text-xs text-muted">{k}</dd>
+                    </dd>
                   </div>
                 ))}
               </dl>

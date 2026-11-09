@@ -1,8 +1,12 @@
 "use client";
 import { useEffect, useRef } from "react";
+import { animate, cubicBezier } from "animejs";
 
 export const prefersReducedMotion = () =>
   typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/** Strong ease-out for UI (menus, dialogs): starts fast, settles softly. Same as --ease-out in globals.css. */
+export const EASE_OUT = cubicBezier(0.23, 1, 0.32, 1);
 
 /**
  * Runs `play` once, as soon as the element starts entering the screen.
@@ -25,7 +29,13 @@ export function useInView<T extends HTMLElement>(
         if (entry.isIntersecting) {
           io.disconnect();
           el.classList.add("bg-in"); // starts the background transition ([data-bg-from], globals.css)
-          cleanup = playRef.current(el);
+          if (!prefersReducedMotion()) cleanup = playRef.current(el);
+          else {
+            // "reduce motion": gentler, not nothing. One short fade, no movement
+            // (CSS has already cleared the clip, scale and blur start states).
+            const a = animate(el.querySelectorAll("[data-anim]"), { opacity: [0, 1], duration: 200, ease: "outQuad" });
+            cleanup = () => a.revert();
+          }
         }
       },
       { threshold, rootMargin }

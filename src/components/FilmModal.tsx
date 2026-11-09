@@ -2,16 +2,17 @@
 
 import { useEffect, useRef, useState } from "react";
 import { animate } from "animejs";
-import { prefersReducedMotion } from "@/lib/motion";
+import { EASE_OUT, prefersReducedMotion } from "@/lib/motion";
 
 const SRC = "/media/livetelco-film-720.mp4";
+// `text`: what each chapter shows, for visitors who cannot watch it (the film has music, no voice-over)
 const CHAPTERS = [
-  { t: 0, label: "The challenge" },
-  { t: 31, label: "Our network" },
-  { t: 44, label: "How it works" },
-  { t: 95, label: "Colocation" },
-  { t: 110, label: "Security" },
-  { t: 125, label: "Service level" },
+  { t: 0, label: "The challenge", text: "Building a ground station in a new country means finding land, licences, zoning, power and fibre: a project of 18 to 24 months before the first link." },
+  { t: 31, label: "Our network", text: "LiveTelco teleports in operation across 7 countries, with more sites in development." },
+  { t: 44, label: "How it works", text: "Satellites link to the operator's antennas inside a LiveTelco site: fence and gate, 24/7 CCTV, shelter and power, and fibre to any carrier." },
+  { t: 95, label: "Colocation", text: "A fenced antenna area in a shared teleport, or a whole teleport dedicated to one operator." },
+  { t: 110, label: "Security", text: "Anti-climb fence, electronic gate, night-vision CCTV and intrusion alerts sent to the 24/7 NOC." },
+  { t: 125, label: "Service level", text: "500 kVA+ of power on a 99.5% SLA, 100G+ redundant fibre, and on-site teams, all followed live in the client portal." },
 ];
 
 /** Open the LiveTelco film in the modal player, optionally at a given second. */
@@ -44,14 +45,32 @@ export default function FilmModal() {
     v.currentTime = startAt.current;
     v.play().catch(() => {});
     document.body.style.overflow = "hidden";
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") return setOpen(false);
+      if (e.key !== "Tab" || !panel.current) return;
+      // focus trap: Tab cycles inside the dialog (close button, player, chapters)
+      const f = [...panel.current.querySelectorAll<HTMLElement>("button, video[controls], summary")];
+      const first = f[0];
+      const last = f[f.length - 1];
+      if (!panel.current.contains(document.activeElement)) {
+        e.preventDefault();
+        first?.focus();
+      } else if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
     window.addEventListener("keydown", onKey);
     const anims =
       prefersReducedMotion() || !panel.current || !backdrop.current
         ? []
         : [
-            animate(backdrop.current, { opacity: [0, 1], duration: 300, ease: "outQuad" }),
-            animate(panel.current, { opacity: [0, 1], scale: [0.96, 1], translateY: [16, 0], duration: 500, ease: "outCubic" }),
+            animate(backdrop.current, { opacity: [0, 1], duration: 250, ease: EASE_OUT }),
+            // modal: centred, 300 ms on a strong ease-out (budget 200–500 ms)
+            animate(panel.current, { opacity: [0, 1], scale: [0.96, 1], translateY: [12, 0], duration: 300, ease: EASE_OUT }),
           ];
     panel.current?.querySelector<HTMLElement>("[data-close]")?.focus();
     return () => {
@@ -66,7 +85,7 @@ export default function FilmModal() {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8" role="dialog" aria-modal="true" aria-label="LiveTelco film">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto overscroll-contain p-4 sm:p-8" role="dialog" aria-modal="true" aria-label="LiveTelco film">
       <div ref={backdrop} className="absolute inset-0 bg-[#050b14]/85 backdrop-blur-md" onClick={() => setOpen(false)} />
       <div ref={panel} className="relative w-full max-w-5xl">
         <div className="mb-3 flex items-center justify-between text-white">
@@ -115,6 +134,17 @@ export default function FilmModal() {
             );
           })}
         </div>
+        <details className="mt-4 text-sm text-white/75">
+          <summary className="w-fit cursor-pointer rounded font-medium text-white hover:text-[#07b6ff]">Read the film as text</summary>
+          <dl className="mt-3 grid max-h-[30vh] gap-3 overflow-y-auto overscroll-contain pr-2">
+            {CHAPTERS.map((c) => (
+              <div key={c.t}>
+                <dt className="font-semibold text-white">{c.label}</dt>
+                <dd className="mt-0.5 leading-relaxed">{c.text}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { animate, stagger } from "animejs";
 import Logo from "./Logo";
+import { EASE_OUT, prefersReducedMotion } from "@/lib/motion";
 
 type Child = { href: string; label: string; note: string };
 type Item = { href: string; label: string; children?: Child[]; sections?: string[]; external?: boolean };
@@ -96,6 +97,8 @@ function Dropdown({ item, active, onOpenChange }: { item: Item; active: boolean;
   const button = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const timer = useRef<number | undefined>(undefined);
+  // animate only when opened with the pointer; keyboard-opened menus appear instantly
+  const animateOpen = useRef(false);
   const id = useId();
   const onOpenChangeRef = useRef(onOpenChange);
   onOpenChangeRef.current = onOpenChange;
@@ -108,8 +111,11 @@ function Dropdown({ item, active, onOpenChange }: { item: Item; active: boolean;
   useEffect(() => {
     const el = panel.current;
     if (!el || !open) return;
-    const a = animate(el, { opacity: [0, 1], translateY: [8, 0], duration: 350, ease: "outExpo" });
-    const b = animate(el.querySelectorAll("a"), { opacity: [0, 1], translateX: [-8, 0], delay: stagger(35), duration: 400, ease: "outExpo" });
+    // the panel only, 180 ms (dropdown budget 150–250 ms); no per-link stagger on something opened this often
+    const a =
+      animateOpen.current && !prefersReducedMotion()
+        ? animate(el, { opacity: [0, 1], translateY: [6, 0], duration: 180, ease: EASE_OUT })
+        : null;
     const close = () => {
       setOpenState(false);
       onOpenChangeRef.current(false);
@@ -125,8 +131,7 @@ function Dropdown({ item, active, onOpenChange }: { item: Item; active: boolean;
     window.addEventListener("keydown", onKey);
     window.addEventListener("pointerdown", onDown);
     return () => {
-      a.revert();
-      b.revert();
+      a?.revert();
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("pointerdown", onDown);
     };
@@ -136,6 +141,7 @@ function Dropdown({ item, active, onOpenChange }: { item: Item; active: boolean;
   const onEnter = (e: React.PointerEvent) => {
     if (e.pointerType !== "mouse") return;
     window.clearTimeout(timer.current);
+    animateOpen.current = true;
     setOpen(true);
   };
   const onLeave = (e: React.PointerEvent) => {
@@ -159,10 +165,13 @@ function Dropdown({ item, active, onOpenChange }: { item: Item; active: boolean;
         className={`nav-link inline-flex items-center gap-1.5 ${active ? "is-active" : ""}`}
         aria-expanded={open}
         aria-controls={id}
-        onClick={() => setOpen(!open)}
+        onClick={(e) => {
+          animateOpen.current = e.detail > 0; // detail 0 = Enter / Space
+          setOpen(!open);
+        }}
       >
         {item.label}
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true" className={`transition-transform duration-300 ${open ? "rotate-180" : ""}`}>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true" className={`transition-transform duration-200 motion-reduce:transition-none ${open ? "rotate-180" : ""}`}>
           <path d="m2 3.5 3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
@@ -173,7 +182,7 @@ function Dropdown({ item, active, onOpenChange }: { item: Item; active: boolean;
               key={c.label}
               href={c.href}
               onClick={() => setOpen(false)}
-              className="block rounded-md px-3 py-2.5 transition-colors hover:bg-white/5 focus-visible:bg-white/5 focus-visible:outline-none"
+              className="block rounded-md px-3 py-2.5 transition-colors hover:bg-white/5 focus-visible:bg-white/5"
             >
               <span className="block text-[15px] font-medium text-white">{c.label}</span>
               <span className="block text-[13px] text-white/55">{c.note}</span>
@@ -194,12 +203,14 @@ function MobileMenu({ active, onClose }: { active: string | null; onClose: (refo
 
   useEffect(() => {
     const el = ref.current!;
+    // a menu opened often must feel instant: 250 ms, small rise, tight stagger (fade only with reduced motion)
+    const reduce = prefersReducedMotion();
     const a = animate(el.querySelectorAll("[data-item]"), {
       opacity: [0, 1],
-      translateY: [24, 0],
-      delay: stagger(50, { start: 80 }),
-      duration: 700,
-      ease: "outExpo",
+      translateY: reduce ? 0 : [8, 0],
+      delay: stagger(30),
+      duration: reduce ? 150 : 250,
+      ease: EASE_OUT,
     });
     // focus trap: Tab cycles through the menu and the close button
     const focusables = () =>
@@ -240,7 +251,7 @@ function MobileMenu({ active, onClose }: { active: string | null; onClose: (refo
       role="dialog"
       aria-modal="true"
       aria-label="Menu"
-      className="fixed inset-0 z-40 flex flex-col overflow-y-auto bg-[#0a1626] px-6 pb-8 pt-24 lg:hidden"
+      className="fixed inset-0 z-40 flex flex-col overflow-y-auto overscroll-contain bg-[#0a1626] px-6 pb-8 pt-24 lg:hidden"
     >
       <nav aria-label="Mobile">
         {LINKS.map((l) =>
@@ -248,7 +259,7 @@ function MobileMenu({ active, onClose }: { active: string | null; onClose: (refo
             <div key={l.label} data-item>
               <button type="button" className={`${row} ${isActive(l, active) ? "text-[#07b6ff]" : "text-white"}`} aria-expanded={sub} aria-controls={subId} onClick={() => setSub((v) => !v)}>
                 {l.label}
-                <svg width="16" height="16" viewBox="0 0 10 10" fill="none" aria-hidden="true" className={`transition-transform duration-300 ${sub ? "rotate-180" : ""}`}>
+                <svg width="16" height="16" viewBox="0 0 10 10" fill="none" aria-hidden="true" className={`transition-transform duration-200 motion-reduce:transition-none ${sub ? "rotate-180" : ""}`}>
                   <path d="m2 3.5 3 3 3-3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
@@ -340,7 +351,7 @@ export default function Nav() {
   return (
     <>
     <header
-      className={`fixed inset-x-0 top-0 z-50 transition-transform duration-500 ease-[cubic-bezier(.16,1,.3,1)] has-[:focus-visible]:translate-y-0 ${
+      className={`fixed inset-x-0 top-0 z-50 transition-transform duration-[250ms] ease-[cubic-bezier(.23,1,.32,1)] motion-reduce:transition-none has-[:focus-visible]:translate-y-0 ${
         hidden ? "-translate-y-full" : "translate-y-0"
       }`}
     >
@@ -394,8 +405,10 @@ export default function Nav() {
             onClick={() => setOpen((v) => !v)}
           >
             <span className="relative block h-3 w-5">
-              <span className={`absolute left-0 h-px w-5 bg-white transition-transform duration-300 ${open ? "top-1.5 rotate-45" : "top-0"}`} />
-              <span className={`absolute left-0 h-px w-5 bg-white transition-transform duration-300 ${open ? "top-1.5 -rotate-45" : "top-3"}`} />
+              {/* both lines sit on the centre line and move with transforms only, so they glide into the cross
+                  (changing `top` would make them jump before rotating) */}
+              <span className={`absolute left-0 top-1.5 h-px w-5 bg-white transition-transform duration-200 ease-[cubic-bezier(.23,1,.32,1)] motion-reduce:transition-none ${open ? "rotate-45" : "-translate-y-1.5"}`} />
+              <span className={`absolute left-0 top-1.5 h-px w-5 bg-white transition-transform duration-200 ease-[cubic-bezier(.23,1,.32,1)] motion-reduce:transition-none ${open ? "-rotate-45" : "translate-y-1.5"}`} />
             </span>
           </button>
         </nav>

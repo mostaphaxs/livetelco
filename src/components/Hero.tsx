@@ -1,32 +1,41 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createTimeline, stagger } from "animejs";
 import { openFilm } from "./FilmModal";
 import { SITES } from "@/lib/locations";
 import { prefersReducedMotion } from "@/lib/motion";
 
-// Proof under the headline: the strongest facts, in one row.
+// Proof under the headline: the strongest facts, as one quiet line of text.
 const LIVE = SITES.filter((s) => s.kind !== "future");
 const IN_DEVELOPMENT = SITES.length - LIVE.length;
-const STATS = [
-  { value: String(LIVE.length), label: "sites in operation" },
-  { value: String(new Set(LIVE.map((s) => s.country)).size), label: "countries" },
-  { value: "99.5%", label: "power SLA" },
-  { value: "ISO 27001", label: "certified" },
+const PROOF = [
+  `${LIVE.length} sites in ${new Set(LIVE.map((s) => s.country)).size} countries`,
+  "99.5% power SLA",
+  "ISO/IEC 27001 certified",
 ];
 
 export default function Hero() {
   const root = useRef<HTMLElement>(null);
   const video = useRef<HTMLVideoElement>(null);
+  // the visitor can pause the loop (WCAG 2.2.2: moving content over 5 s needs a pause control)
+  const [paused, setPaused] = useState(false);
+  const pausedRef = useRef(false);
+  const togglePause = () => {
+    const v = video.current!;
+    pausedRef.current = !pausedRef.current;
+    setPaused(pausedRef.current);
+    if (pausedRef.current) v.pause();
+    else v.play().catch(() => {});
+  };
 
   // The film plays muted while the hero is on screen. It is content, not decoration,
-  // so it also plays with "reduce motion" on.
+  // so it also plays with "reduce motion" on (with a pause button).
   useEffect(() => {
     const v = video.current!;
     v.muted = true; // React does not reflect `muted` as an attribute; autoplay needs the property
     let onScreen = true;
-    const tryPlay = () => onScreen && v.paused && v.play().catch(() => {});
+    const tryPlay = () => onScreen && !pausedRef.current && v.paused && v.play().catch(() => {});
     const io = new IntersectionObserver(
       ([e]) => {
         onScreen = e.isIntersecting;
@@ -61,7 +70,7 @@ export default function Hero() {
       tl = createTimeline({ defaults: { ease: "outCubic", duration: 900 } }).add(reveal, {
         opacity: [0, 1],
         translateY: [16, 0],
-        delay: stagger(110),
+        delay: stagger(70),
       });
     };
     // on a first visit, wait for the intro to hand over
@@ -77,10 +86,10 @@ export default function Hero() {
     <section ref={root} id="top" className="dark relative isolate overflow-hidden !bg-[#05090f] pt-[72px]">
       {/* background = the film's own background colour, so the video sits in it seamlessly */}
       <div className="container-x relative flex items-center pb-10 pt-12 md:min-h-[min(780px,calc(100svh-72px-96px))] md:py-16">
-        <div className="relative z-10 max-w-[600px] md:max-w-[min(600px,38vw)]">
+        <div className="relative z-10 max-w-[600px] md:max-w-[min(640px,39vw)]">
           <h1
             data-reveal
-            className="max-w-[11.5em] font-display text-[clamp(2.15rem,3.5vw,3.15rem)] font-semibold leading-[1.05] tracking-[-0.04em] text-white"
+            className="max-w-[12em] font-display text-[clamp(2.25rem,3.5vw,3.5rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-white"
           >
             Teleport facilities for LEO satellite operators.
           </h1>
@@ -110,42 +119,60 @@ export default function Hero() {
 
       {/* the LiveTelco film, flush with the right edge (below the copy on phones).
           Clicking it opens the full film, same as the "Watch the film" button. */}
-      <button
-        type="button"
-        onClick={() => openFilm()}
-        aria-label="Watch the film (2 min 39)"
-        className="group relative mx-[clamp(20px,5vw,96px)] mb-8 block aspect-video cursor-pointer overflow-hidden rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white md:absolute md:right-0 md:top-[calc(50%-40px)] md:mx-0 md:mb-0 md:w-[53vw] md:max-w-[1040px] md:-translate-y-1/2 md:rounded-none md:rounded-l-xl"
-      >
-        <video
-          ref={video}
-          src="/media/hero-loop.mp4"
-          poster="/media/hero-poster.jpg"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          className="h-full w-full object-cover"
-        />
-      </button>
+      <div className="relative mx-[clamp(20px,5vw,96px)] mb-8 aspect-video md:absolute md:right-0 md:top-[calc(50%-40px)] md:mx-0 md:mb-0 md:w-[53vw] md:max-w-[1040px] md:-translate-y-1/2">
+        <button
+          type="button"
+          onClick={() => openFilm()}
+          aria-label="Watch the film (2 min 39)"
+          className="block h-full w-full cursor-pointer overflow-hidden rounded-xl md:rounded-none md:rounded-l-xl"
+        >
+          <video
+            ref={video}
+            src="/media/hero-loop.mp4"
+            poster="/media/hero-poster.jpg"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            aria-hidden="true"
+            className="h-full w-full object-cover"
+          />
+        </button>
+        <button
+          type="button"
+          onClick={togglePause}
+          aria-label={paused ? "Play the background film" : "Pause the background film"}
+          className="absolute bottom-3 right-3 grid h-9 w-9 place-items-center rounded-full border border-white/25 bg-[#05090f]/60 text-white backdrop-blur transition-colors hover:border-white/60 hover:bg-[#05090f]/80"
+        >
+          {paused ? (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="ml-0.5">
+              <path d="M8 5.5v13l11-6.5z" />
+            </svg>
+          ) : (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" />
+            </svg>
+          )}
+        </button>
+      </div>
 
       {/* proof: the strongest facts in one row */}
       <div className="relative border-t border-white/10">
-        <div data-reveal className="container-x flex flex-col gap-5 py-6 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4 lg:flex lg:gap-x-14">
-            {STATS.map((s) => (
-              <div key={s.label} className="flex flex-col">
-                <dt className="order-2 text-[13px] text-[#8d9bb0]">{s.label}</dt>
-                <dd className="order-1 font-display text-[1.3rem] font-semibold leading-tight tracking-[-0.025em] text-white tabular-nums">{s.value}</dd>
-              </div>
+        <div data-reveal className="container-x flex flex-col gap-3 py-5 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-8">
+          <p className="text-[#b9c3d1]">
+            {PROOF.map((s, i) => (
+              <span key={s} className="whitespace-nowrap">
+                {i > 0 && <span aria-hidden="true" className="mx-3 inline-block h-3 w-px translate-y-[1px] bg-white/20 align-middle" />}
+                {s}
+              </span>
             ))}
-          </dl>
+          </p>
           <a
             href="#network"
-            className="group inline-flex items-center gap-2 self-start py-2 text-sm font-medium text-white underline decoration-white/30 underline-offset-4 transition-colors hover:decoration-white lg:self-auto"
+            className="self-start whitespace-nowrap py-1 font-medium text-white underline decoration-white/30 underline-offset-4 transition-colors hover:decoration-white sm:self-auto"
           >
             See all {SITES.length} sites, {IN_DEVELOPMENT} in development
-            <span aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">→</span>
           </a>
         </div>
       </div>

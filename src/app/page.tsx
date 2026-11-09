@@ -12,8 +12,11 @@ import Closing from "@/components/Closing";
 export default function Home() {
   return (
     <>
+      <a href="#main" className="skip-link">
+        Skip to content
+      </a>
       <Nav />
-      <main>
+      <main id="main" tabIndex={-1} className="outline-none">
         <Hero />
         <Challenge />
         <Services />

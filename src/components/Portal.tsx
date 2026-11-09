@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Signal from "./Signal";
+import CountryLink from "./CountryLink";
 import { useInView } from "@/lib/motion";
 import { count, fade, power, q, signal, timeline } from "@/lib/reveal";
 
@@ -13,18 +15,30 @@ const FEATURES = [
   ["Documents", "Contracts, invoices and reports."],
 ];
 
+// a sample operator account on three real LiveTelco sites
 const SITES = [
-  { code: "Site XX1", where: "UAE · Dedicated", load: "24.0 kW", ok: true },
-  {
-    code: "Site XX2",
-    where: "Saudi Arabia · Shared",
-    load: "12.1 kW",
-    ok: true,
-  },
-  { code: "Site XX3", where: "Egypt · Shared", load: "10.4 kW", ok: false },
+  { site: "Ras Al Khaimah", country: "UAE", plan: "Dedicated", kw: 24.0, ok: true },
+  { site: "Riyadh", country: "Saudi Arabia", plan: "Shared", kw: 12.1, ok: true },
+  { site: "Suez", country: "Egypt", plan: "Shared", kw: 10.4, ok: false },
 ];
 
+const REFRESH_S = 15;
+
+/** The sample feed: every 15 s a refresh nudges each load by up to ±0.2 kW; the header counts the seconds since. */
+function useLiveFeed() {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => setTick((t) => t + 1), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+  const refresh = Math.floor(tick / REFRESH_S);
+  // deterministic wobble per refresh (same on server and first client render: refresh 0 = the base values)
+  const loads = SITES.map((s, i) => (refresh === 0 ? s.kw : Math.round((s.kw + Math.sin(refresh * 12.9898 + i * 78.233) * 0.2) * 10) / 10));
+  return { age: tick % REFRESH_S, loads };
+}
+
 export default function Portal() {
+  const { age, loads } = useLiveFeed();
   // the dashboard boots: the screen switches on, the figures count up, the rows load
   const ref = useInView<HTMLElement>(
     (el) => {
@@ -61,7 +75,7 @@ export default function Portal() {
               </div>
             ))}
           </dl>
-          <a href="#quote" data-anim="fade" className="btn btn-primary mt-10">
+          <a href="https://livetelco.com/portal/" data-anim="fade" className="btn btn-primary mt-10">
             Sign in to the portal
           </a>
         </div>
@@ -77,10 +91,14 @@ export default function Portal() {
                 <span className="font-display font-semibold text-heading">
                   Overview
                 </span>
-                <span className="text-muted">Demo Operator</span>
+                <span className="text-muted">Sample operator</span>
               </div>
-              <span className="rounded-md bg-soft px-2 py-1 text-xs text-muted">
-                Last 30 days
+              <span className="flex items-center gap-2 text-xs text-muted tabular-nums" aria-live="off">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inset-0 animate-ping rounded-full bg-green/60 [animation-duration:2.4s] motion-reduce:hidden" />
+                  <span className="relative h-1.5 w-1.5 rounded-full bg-green" />
+                </span>
+                {age === 0 ? "Updated just now" : `Updated ${age} s ago`}
               </span>
             </div>
             <div className="grid grid-cols-3 divide-x divide-line border-b border-line">
@@ -107,21 +125,21 @@ export default function Portal() {
                   <th className="hidden px-5 py-3 font-medium sm:table-cell">
                     Location
                   </th>
-                  <th className="px-5 py-3 font-medium">Load</th>
+                  <th className="px-5 py-3 text-right font-medium">Load</th>
                   <th className="px-5 py-3 font-medium">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line border-t border-line">
-                {SITES.map((s) => (
-                  <tr key={s.code} data-anim="row">
+                {SITES.map((s, i) => (
+                  <tr key={s.site} data-anim="row" className="transition-colors duration-150 hover:bg-soft">
                     <td className="px-5 py-3.5 font-medium text-heading">
-                      {s.code}
+                      {s.site}
                     </td>
                     <td className="hidden px-5 py-3.5 text-muted sm:table-cell">
-                      {s.where}
+                      <CountryLink country={s.country} /> · {s.plan}
                     </td>
-                    <td className="px-5 py-3.5 tabular-nums text-ink">
-                      {s.load}
+                    <td className="px-5 py-3.5 text-right tabular-nums text-ink">
+                      {loads[i].toFixed(1)} kW
                     </td>
                     <td className="px-5 py-3.5">
                       <span

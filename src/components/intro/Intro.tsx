@@ -72,7 +72,7 @@ export default function Intro() {
           ease: "outQuart", // leaves the centre at once, settles softly into the nav
         }).then(land);
       } else {
-        animate(img, { opacity: 0, duration: 500, ease: "inQuad" });
+        animate(img, { opacity: 0, duration: 500, ease: "outQuad" });
         timers.push(window.setTimeout(land, 520));
       }
       // animations pause in background tabs: make sure the hand-over always completes
