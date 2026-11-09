@@ -5,12 +5,12 @@ export const prefersReducedMotion = () =>
   typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /**
- * Runs `play` once when the element first scrolls into view.
+ * Runs `play` once, as soon as the element starts entering the screen.
  * `play` may return a cleanup (e.g. to revert anime.js animations).
  */
 export function useInView<T extends HTMLElement>(
   play: (el: T) => void | (() => void),
-  { threshold = 0.2, rootMargin = "0px 0px -10% 0px" } = {}
+  { threshold = 0, rootMargin = "0px 0px -6% 0px" } = {}
 ) {
   const ref = useRef<T>(null);
   const playRef = useRef(play);
@@ -24,6 +24,7 @@ export function useInView<T extends HTMLElement>(
       ([entry]) => {
         if (entry.isIntersecting) {
           io.disconnect();
+          el.classList.add("bg-in"); // starts the background transition ([data-bg-from], globals.css)
           cleanup = playRef.current(el);
         }
       },

@@ -36,11 +36,10 @@ export default function Portal() {
       fade(tl, q(el, '[data-anim="row"]'), 1200, 160);
       return () => tl.revert();
     },
-    { threshold: 0.2 },
   );
 
   return (
-    <section ref={ref} id="portal" className="relative sec">
+    <section ref={ref} id="portal" className="relative sec" data-bg-from="navy">
       <Signal />
       <div className="container-x grid items-center gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
         <div>
@@ -126,7 +125,7 @@ export default function Portal() {
                     </td>
                     <td className="px-5 py-3.5">
                       <span
-                        className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium ${s.ok ? "bg-green/10 text-green" : "bg-amber/15 text-[#a8640f]"}`}
+                        className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium ${s.ok ? "bg-green/10 text-[#0b7a52]" : "bg-amber/15 text-[#8a5208]"}`}
                       >
                         <span className="h-1.5 w-1.5 rounded-full bg-current" />
                         {s.ok ? "Normal" : "Maintenance"}

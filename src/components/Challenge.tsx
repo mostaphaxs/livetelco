@@ -80,11 +80,10 @@ export default function Challenge() {
       scan(tl, q(el, '[data-anim="scan"]'), 700, 110);
       return () => tl.revert();
     },
-    { threshold: 0.15 },
   );
 
   return (
-    <section ref={ref} className="relative sec">
+    <section ref={ref} className="relative sec" data-bg-from="ink">
       <Signal />
       <div className="container-x">
         <div className="max-w-2xl">
@@ -121,7 +120,7 @@ export default function Challenge() {
               data-anim="scan"
               className={`grid md:grid-cols-[0.8fr_1fr_1fr] ${i < ROWS.length - 1 ? "border-b border-line" : ""}`}
             >
-              <div className="px-6 pt-5 font-display font-semibold text-heading md:py-5">
+              <div className="px-6 pt-5 font-semibold tracking-[-0.011em] text-heading md:py-5">
                 {r.topic}
               </div>
               <div className="flex gap-2.5 px-6 py-2 text-sm text-muted md:py-5">

@@ -6,10 +6,15 @@ import { openFilm } from "./FilmModal";
 import { SITES } from "@/lib/locations";
 import { prefersReducedMotion } from "@/lib/motion";
 
-// Proof under the headline: the countries where sites are in operation, with how many.
+// Proof under the headline: the strongest facts, in one row.
 const LIVE = SITES.filter((s) => s.kind !== "future");
-const COUNTRIES = [...new Set(LIVE.map((s) => s.country))].map((c) => ({ name: c, sites: LIVE.filter((s) => s.country === c).length }));
 const IN_DEVELOPMENT = SITES.length - LIVE.length;
+const STATS = [
+  { value: String(LIVE.length), label: "sites in operation" },
+  { value: String(new Set(LIVE.map((s) => s.country)).size), label: "countries" },
+  { value: "99.5%", label: "power SLA" },
+  { value: "ISO 27001", label: "certified" },
+];
 
 export default function Hero() {
   const root = useRef<HTMLElement>(null);
@@ -27,8 +32,7 @@ export default function Hero() {
         onScreen = e.isIntersecting;
         if (onScreen) tryPlay();
         else v.pause();
-      },
-      { threshold: 0.05 }
+      }
     );
     io.observe(root.current!);
     v.addEventListener("canplay", tryPlay);
@@ -72,21 +76,21 @@ export default function Hero() {
   return (
     <section ref={root} id="top" className="dark relative isolate overflow-hidden !bg-[#05090f] pt-[72px]">
       {/* background = the film's own background colour, so the video sits in it seamlessly */}
-      <div className="container-x relative flex min-h-[min(760px,calc(100svh-72px-96px))] items-center py-16">
-        <div className="relative z-10 max-w-[600px] md:max-w-[min(520px,37vw)]">
+      <div className="container-x relative flex items-center pb-10 pt-12 md:min-h-[min(780px,calc(100svh-72px-96px))] md:py-16">
+        <div className="relative z-10 max-w-[600px] md:max-w-[min(600px,38vw)]">
           <h1
             data-reveal
-            className="max-w-[11.5em] font-display text-[clamp(2.4rem,3.9vw,3.5rem)] font-medium leading-[1.04] tracking-[-0.035em] text-white"
+            className="max-w-[11.5em] font-display text-[clamp(2.15rem,3.5vw,3.15rem)] font-semibold leading-[1.05] tracking-[-0.04em] text-white"
           >
             Teleport facilities for LEO satellite operators.
           </h1>
-          <p data-reveal className="mt-7 max-w-[33rem] text-[1.075rem] leading-[1.7] text-[#b9c3d1]">
+          <p data-reveal className="mt-7 max-w-[34rem] text-[1.0625rem] leading-[1.65] text-[#b9c3d1]">
             Our land, your colocation. We hold the land, licences and zoning in the countries your constellation needs,
             and run the power, fibre, security and on-site teams. You bring the antennas.
           </p>
           <div data-reveal className="mt-10 flex flex-wrap items-center gap-x-7 gap-y-4">
             <a href="#quote" className="btn btn-primary">
-              Get a quote
+              Check site availability
             </a>
             <button
               type="button"
@@ -104,10 +108,13 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* the LiveTelco film, flush with the right edge (below the copy on phones) */}
-      <div
-        aria-hidden="true"
-        className="relative mx-[clamp(20px,4vw,40px)] mb-10 aspect-video overflow-hidden rounded-xl md:absolute md:right-0 md:top-[calc(50%-24px)] md:mx-0 md:mb-0 md:w-[50vw] md:max-w-[1000px] md:-translate-y-1/2 md:rounded-none md:rounded-l-xl"
+      {/* the LiveTelco film, flush with the right edge (below the copy on phones).
+          Clicking it opens the full film, same as the "Watch the film" button. */}
+      <button
+        type="button"
+        onClick={() => openFilm()}
+        aria-label="Watch the film (2 min 39)"
+        className="group relative mx-[clamp(20px,5vw,96px)] mb-8 block aspect-video cursor-pointer overflow-hidden rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white md:absolute md:right-0 md:top-[calc(50%-40px)] md:mx-0 md:mb-0 md:w-[53vw] md:max-w-[1040px] md:-translate-y-1/2 md:rounded-none md:rounded-l-xl"
       >
         <video
           ref={video}
@@ -117,27 +124,28 @@ export default function Hero() {
           muted
           loop
           playsInline
-          preload="auto"
+          preload="metadata"
           className="h-full w-full object-cover"
         />
-      </div>
+      </button>
 
-      {/* proof: where the sites are, and how many in each country */}
+      {/* proof: the strongest facts in one row */}
       <div className="relative border-t border-white/10">
-        <div data-reveal className="container-x flex flex-wrap items-baseline gap-x-10 gap-y-4 py-7">
-          <p className="w-full text-sm text-[#8d9bb0] lg:w-auto">Sites in operation, by country</p>
-          <ul className="flex flex-1 flex-wrap items-baseline gap-x-7 gap-y-2" aria-label="Countries with sites in operation">
-            {COUNTRIES.map((c) => (
-              <li key={c.name} className="font-display text-[1.15rem] font-medium tracking-[-0.01em] text-white">
-                {c.name}
-                <sup className="ml-0.5 text-[0.62em] font-semibold text-[#3fc5ff]" aria-label={`${c.sites} sites`}>
-                  {c.sites}
-                </sup>
-              </li>
+        <div data-reveal className="container-x flex flex-col gap-5 py-6 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4 lg:flex lg:gap-x-14">
+            {STATS.map((s) => (
+              <div key={s.label} className="flex flex-col">
+                <dt className="order-2 text-[13px] text-[#8d9bb0]">{s.label}</dt>
+                <dd className="order-1 font-display text-[1.3rem] font-semibold leading-tight tracking-[-0.025em] text-white tabular-nums">{s.value}</dd>
+              </div>
             ))}
-          </ul>
-          <a href="#network" className="text-sm font-medium text-white underline decoration-white/30 underline-offset-4 transition-colors hover:decoration-white">
+          </dl>
+          <a
+            href="#network"
+            className="group inline-flex items-center gap-2 self-start py-2 text-sm font-medium text-white underline decoration-white/30 underline-offset-4 transition-colors hover:decoration-white lg:self-auto"
+          >
             See all {SITES.length} sites, {IN_DEVELOPMENT} in development
+            <span aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">→</span>
           </a>
         </div>
       </div>

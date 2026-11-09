@@ -53,7 +53,6 @@ export default function Closing() {
       develop(tl, q(el, '[data-anim="develop"]'), 550, 150);
       return () => tl.revert();
     },
-    { threshold: 0.15 },
   );
   // contact: the block opens from a line of light, like a link coming up
   const ctaRef = useInView<HTMLDivElement>(
@@ -63,7 +62,6 @@ export default function Closing() {
       fade(tl, q(el, '[data-anim="cta"]'), 600, 120);
       return () => tl.revert();
     },
-    { threshold: 0.3 },
   );
 
   return (

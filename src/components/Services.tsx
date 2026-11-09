@@ -65,7 +65,6 @@ export default function Services() {
       draw(tl, q(el, '[data-anim="draw"]'), 1150, 140);
       return () => tl.revert();
     },
-    { threshold: 0.12 },
   );
 
   return (
@@ -93,7 +92,7 @@ export default function Services() {
           className="card mt-14 grid overflow-hidden lg:grid-cols-[1fr_1.15fr]"
         >
           <div className="p-8 sm:p-10">
-            <h3 className="text-2xl font-semibold">Colocation</h3>
+            <h3 className="font-display text-2xl font-semibold tracking-[-0.015em]">Colocation</h3>
             <p className="mt-3 leading-relaxed text-muted">
               A fenced antenna area in a shared compound, or a whole teleport
               reserved for you. Power, fibre, shelters and people around your

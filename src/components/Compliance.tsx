@@ -31,11 +31,10 @@ export default function Compliance() {
       draw(tl, q(el, '[data-anim="draw"]'), 900, 380);
       return () => tl.revert();
     },
-    { threshold: 0.2 },
   );
 
   return (
-    <section ref={ref} id="compliance" className="relative sec">
+    <section ref={ref} id="compliance" className="relative sec" data-bg-from="navy">
       <Signal />
       <div className="container-x grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-20">
         <div>
@@ -68,7 +67,7 @@ export default function Compliance() {
                 0{i + 1}
               </span>
               <div className="flex-1">
-                <div className="font-display text-lg font-semibold text-heading">
+                <div className="text-lg font-semibold tracking-[-0.011em] text-heading">
                   {r.title}
                 </div>
                 <div className="mt-1 text-sm text-muted">{r.note}</div>

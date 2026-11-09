@@ -46,7 +46,6 @@ export default function HowItWorks() {
       fade(tl, q(el, '[data-anim="step"]'), 1800, 260);
       return () => tl.revert();
     },
-    { threshold: 0.12 },
   );
   // the two photos develop when they come into view
   const cardsRef = useInView<HTMLDivElement>(
@@ -56,11 +55,10 @@ export default function HowItWorks() {
       develop(tl, q(el, '[data-anim="develop"]'), 100, 180);
       return () => tl.revert();
     },
-    { threshold: 0.15 },
   );
 
   return (
-    <section ref={ref} id="how" className="dark relative sec">
+    <section ref={ref} id="how" className="dark relative sec" data-bg-from="soft">
       <Signal />
       <div className="container-x">
         <div className="grid items-end gap-6 lg:grid-cols-[1.2fr_1fr]">
@@ -123,7 +121,7 @@ export default function HowItWorks() {
               />
             </div>
             <div className="p-7 sm:p-8">
-              <h3 className="text-xl font-semibold">
+              <h3 className="font-display text-xl font-semibold">
                 Our teleports. Your colocation.
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-muted">
@@ -160,7 +158,7 @@ export default function HowItWorks() {
               />
             </div>
             <div className="p-7 sm:p-8">
-              <h3 className="text-xl font-semibold">Security comes first.</h3>
+              <h3 className="font-display text-xl font-semibold">Security comes first.</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted">
                 A security assessment before every site. Standard with automated
                 access control, or Premium with 24/7 guards.

@@ -77,7 +77,6 @@ export default function Network() {
       fade(tl, q(el, '[data-anim="country"]'), 700, 110);
       return () => tl.revert();
     },
-    { threshold: 0.12 },
   );
 
   return (
@@ -85,6 +84,7 @@ export default function Network() {
       ref={ref}
       id="network"
       className="dark relative overflow-hidden sec"
+      data-bg-from="white"
     >
       <Signal />
       <div className="container-x">

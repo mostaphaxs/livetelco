@@ -6,7 +6,8 @@ import { createDrawable, createTimeline, stagger } from "animejs";
   Start states live in globals.css (.js [data-anim=...]).
 */
 export type Timeline = ReturnType<typeof createTimeline>;
-export const timeline = () => createTimeline({ defaults: { ease: "outCubic" } });
+// played 1.7× faster than authored: content must not keep visitors waiting
+export const timeline = () => createTimeline({ defaults: { ease: "outCubic" }, playbackRate: 1.7 });
 export const q = (el: Element, sel: string) => [...el.querySelectorAll<HTMLElement>(sel)];
 
 /** the signal crosses the top edge of the section */

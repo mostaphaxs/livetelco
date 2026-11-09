@@ -2,7 +2,7 @@
 
 /*
   LiveTelco — clean corporate system.
-  White page, navy bands for contrast, one accent (cyan). Poppins for headings, Inter for text.
+  White page, navy bands for contrast, one accent (cyan). Geist for headings and text.
   No glows, no gradient text, no monospace HUD labels: hierarchy comes from type and space.
 */
 :root {
@@ -11,13 +11,13 @@
   --navy: #0a1626;
   --navy-2: #0f1f33;
   --text: #3b4656;
-  --muted: #6b7686;
+  --muted: #5f6a7a; /* AA on white and on --soft */
   --heading: #0b1626;
   --line: #e3e7ed;
   --chip: #f1f4f8;
   --panel: #ffffff;
   --accent: #07b6ff;
-  --accent-ink: #0086c9; /* accent for text on white (AA contrast) */
+  --accent-ink: #006fa6; /* accent for text on white / --soft (AA contrast) */
   --violet: #4129a2;
   --amber: #e8962e;
   --green: #12a36f;
@@ -61,9 +61,9 @@
   --color-amber: var(--amber);
   --color-green: var(--green);
   --color-blue: var(--blue);
-  --font-sans: var(--font-inter);
-  --font-display: var(--font-poppins);
-  --font-mono: var(--font-jb);
+  --font-sans: var(--font-geist);
+  --font-display: var(--font-geist);
+  --font-mono: var(--font-geist-mono);
 }
 
 html {
@@ -74,7 +74,7 @@ html {
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family: var(--font-geist), system-ui, sans-serif;
   font-size: 16px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -88,45 +88,56 @@ h2,
 h3,
 h4 {
   color: var(--heading);
-  font-family: var(--font-poppins), system-ui, sans-serif;
+  text-wrap: balance;
+}
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-geist), system-ui, sans-serif;
+  letter-spacing: -0.015em;
+}
+p {
+  text-wrap: pretty;
 }
 
 /* ---------- layout & type ---------- */
 .container-x {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1920px;
   margin-inline: auto;
-  padding-inline: clamp(20px, 4vw, 40px);
+  padding-inline: clamp(20px, 5vw, 96px);
 }
 .sec {
   padding-block: clamp(80px, 9vw, 120px);
 }
 .eyebrow {
   display: inline-block;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--accent-ink);
 }
 .h-display {
-  font-family: var(--font-poppins), system-ui, sans-serif;
+  font-family: var(--font-geist), system-ui, sans-serif;
   font-weight: 600;
   letter-spacing: -0.022em;
   line-height: 1.15;
   color: var(--heading);
 }
+/* same weight and tracking as the hero headline, one step down in size */
 .h-section {
-  font-family: var(--font-poppins), system-ui, sans-serif;
+  font-family: var(--font-geist), system-ui, sans-serif;
   font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.18;
-  font-size: clamp(1.8rem, 3.2vw, 2.6rem);
+  letter-spacing: -0.035em;
+  line-height: 1.12;
+  font-size: clamp(1.65rem, 2.9vw, 2.35rem);
   color: var(--heading);
 }
 .lead {
-  font-size: 1.075rem;
-  line-height: 1.7;
+  font-size: 1.0625rem;
+  line-height: 1.65;
   color: var(--muted);
 }
 /* kept for older markup: renders as plain accent text, no gradient */
@@ -176,7 +187,7 @@ h4 {
   transition: background-color 0.2s, border-color 0.2s, color 0.2s;
 }
 .btn-primary {
-  color: #fff;
+  color: #04121f;
   background: var(--accent);
 }
 .btn-primary:hover {
@@ -249,7 +260,7 @@ html.intro-logo-pending header a[aria-label="LiveTelco home"] {
   white-space: nowrap;
   padding: 3px 8px;
   border-radius: 5px;
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family: var(--font-geist), system-ui, sans-serif;
   font-size: 11px;
   font-weight: 500;
   color: #fff;
@@ -299,8 +310,43 @@ html.intro-logo-pending header a[aria-label="LiveTelco home"] {
 .nav-link:hover {
   color: #07b6ff;
 }
-.nav-link:hover::after {
+.nav-link:hover::after,
+.nav-link.is-active::after {
   transform: scaleX(1);
+}
+.nav-link:focus-visible {
+  outline: 2px solid #07b6ff;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .nav-link {
+    padding-inline: 8px;
+  }
+  .nav-link::after {
+    left: 8px;
+    right: 8px;
+  }
+}
+/* mobile menu: call / email / WhatsApp tiles */
+.mobile-contact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 72px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+.mobile-contact:hover,
+.mobile-contact:focus-visible {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.05);
 }
 .btn-site {
   display: inline-flex;
@@ -323,6 +369,8 @@ html.intro-logo-pending header a[aria-label="LiveTelco home"] {
 }
 .btn-site-solid {
   padding: 0 18px;
+  color: #04121f;
+  font-weight: 600;
   background: #07b6ff;
 }
 .btn-site-solid:hover {
@@ -379,4 +427,26 @@ html.intro-logo-pending header a[aria-label="LiveTelco home"] {
   opacity: 1;
   transform: scaleX(0);
   transform-origin: left center;
+}
+
+
+
+/* ---------- section background transitions ----------
+   A section that follows one of the opposite tone first takes the previous section's colour,
+   then animates to its own as it enters the screen (useInView adds .bg-in), while its content
+   fades in. Only with JS on (.js); without it every section simply shows its own colour. */
+[data-bg-from="ink"] { --bg-from: #05090f; }
+[data-bg-from="navy"] { --bg-from: #0a1626; }
+[data-bg-from="white"] { --bg-from: #ffffff; }
+[data-bg-from="soft"] { --bg-from: #f5f7fa; }
+[data-bg-from] {
+  transition: background-color 1.1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.js [data-bg-from]:not(.bg-in) {
+  background-color: var(--bg-from);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-bg-from] {
+    transition-duration: 0.4s;
+  }
 }

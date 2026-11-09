@@ -1,16 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Poppins, JetBrains_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Intro from "@/components/intro/Intro";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
-const display = Poppins({
-  subsets: ["latin"],
-  variable: "--font-poppins",
-  weight: ["500", "600", "700"],
-  display: "swap",
-});
-const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jb", display: "swap" });
+// One family for headings and text, plus its mono for figures and labels.
+const sans = Geist({ subsets: ["latin"], variable: "--font-geist", display: "swap" });
+const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono", display: "swap" });
 
 export const metadata: Metadata = {
   title: "LiveTelco — Teleport facilities for LEO satellite operators",
@@ -24,7 +19,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${display.variable} ${mono.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${sans.variable} ${mono.variable}`}>
       <head>
         {/* lets CSS hide [data-reveal] elements only when JS will animate them in */}
         <script dangerouslySetInnerHTML={{
