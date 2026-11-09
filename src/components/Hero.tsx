@@ -119,7 +119,8 @@ export default function Hero() {
 
       {/* the LiveTelco film, flush with the right edge (below the copy on phones).
           Clicking it opens the full film, same as the "Watch the film" button. */}
-      <div className="relative mx-[clamp(20px,5vw,96px)] mb-8 aspect-video md:absolute md:right-0 md:top-[calc(50%-40px)] md:mx-0 md:mb-0 md:w-[53vw] md:max-w-[1040px] md:-translate-y-1/2">
+      {/* data-film-origin: the film player grows out of this box and shrinks back into it (FilmModal) */}
+      <div data-film-origin className="relative mx-[clamp(20px,5vw,96px)] mb-8 aspect-video md:absolute md:right-0 md:top-[calc(50%-40px)] md:mx-0 md:mb-0 md:w-[53vw] md:max-w-[1040px] md:-translate-y-1/2">
         <button
           type="button"
           onClick={() => openFilm()}
