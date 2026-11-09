@@ -25,6 +25,7 @@ export const SITES: Site[] = [
   { city: "Kumasi", country: "Ghana", lat: 6.69, lon: -1.62, kind: "teleport" },
   { city: "Pamdu", country: "Ghana", lat: 7.95, lon: -1.95, kind: "teleport" },
   // Towers
+  
   { city: "Vavatsinia", country: "Cyprus", lat: 34.88, lon: 33.38, kind: "tower" },
   { city: "Bakkish", country: "Lebanon", lat: 33.95, lon: 35.8, kind: "tower" },
   // Future teleports
