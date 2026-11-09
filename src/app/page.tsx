@@ -17,11 +17,9 @@ export default function Home() {
       </a>
       <Nav />
       <main id="main" tabIndex={-1} className="outline-none">
-        asdsad
         <Hero />
         <Challenge />
         <Services />
-        
         <HowItWorks />
         <Compliance />
         <Network />
