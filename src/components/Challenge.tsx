@@ -118,7 +118,7 @@ export default function Challenge() {
             <div
               key={r.topic}
               data-anim="scan"
-              className={`grid md:grid-cols-[0.8fr_1fr_1fr] ${i < ROWS.length - 1 ? "border-b border-line" : ""}`}
+              className={`grid transition-colors duration-200 hover:bg-soft/70 md:grid-cols-[0.8fr_1fr_1fr] ${i < ROWS.length - 1 ? "border-b border-line" : ""}`}
             >
               <div className="px-6 pt-5 font-semibold tracking-[-0.011em] text-heading md:py-5">
                 {r.topic}

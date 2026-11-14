@@ -6,6 +6,7 @@ import Signal from "./Signal";
 import CountryLink from "./CountryLink";
 import { SITES } from "@/lib/locations";
 import { useInView } from "@/lib/motion";
+import { useSpotlight } from "@/lib/spotlight";
 import { develop, fade, power, q, signal, timeline } from "@/lib/reveal";
 
 const NEWS = [
@@ -70,6 +71,7 @@ const FOOTER: { title: string; links: [string, string][] }[] = [
 ];
 
 export default function Closing() {
+  const spot = useSpotlight<HTMLDivElement>();
   // news: the photos develop, from blurred and grey to sharp and in colour
   const newsRef = useInView<HTMLElement>(
     (el) => {
@@ -109,12 +111,12 @@ export default function Closing() {
               All news and references
             </a>
           </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
+          <div ref={spot} className="mt-12 grid gap-6 md:grid-cols-3">
             {NEWS.map((n) => (
               <article
                 key={n.title}
                 data-anim="card"
-                className="card card-hover group relative flex flex-col overflow-hidden has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-4 has-[a:focus-visible]:outline-[var(--accent-ink)]"
+                className="card card-hover spot group relative flex flex-col overflow-hidden has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-4 has-[a:focus-visible]:outline-[var(--accent-ink)]"
               >
                 <div
                   data-anim="develop"
@@ -163,7 +165,7 @@ export default function Closing() {
         <div ref={ctaRef} className="container-x">
           <div
             data-anim="power"
-            className="dark grid items-center gap-8 rounded-2xl px-8 py-12 sm:px-14 sm:py-16 lg:grid-cols-[1.4fr_1fr]"
+            className="dark aurora grid items-center gap-8 rounded-[var(--radius)] px-8 py-12 sm:px-14 sm:py-16 lg:grid-cols-[1.4fr_1fr]"
           >
             <div>
               <h2 data-anim="cta" className="h-section">

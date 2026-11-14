@@ -3,21 +3,21 @@
 import { useEffect, useRef, useState } from "react";
 import { createTimeline, stagger } from "animejs";
 import { openFilm } from "./FilmModal";
+import SiteTicker from "./SiteTicker";
+import Words from "./Words";
 import { SITES } from "@/lib/locations";
-import { prefersReducedMotion } from "@/lib/motion";
+import { EASE_OUT, prefersReducedMotion } from "@/lib/motion";
+import { useMagnet } from "@/lib/spotlight";
 
-// Proof under the headline: the strongest facts, as one quiet line of text.
+const HEADLINE = "Teleport facilities for LEO satellite operators.";
 const LIVE = SITES.filter((s) => s.kind !== "future");
 const IN_DEVELOPMENT = SITES.length - LIVE.length;
-const PROOF = [
-  `${LIVE.length} sites in ${new Set(LIVE.map((s) => s.country)).size} countries`,
-  "99.5% power SLA",
-  "ISO/IEC 27001 certified",
-];
 
 export default function Hero() {
   const root = useRef<HTMLElement>(null);
   const video = useRef<HTMLVideoElement>(null);
+  const film = useRef<HTMLDivElement>(null);
+  const actions = useMagnet<HTMLDivElement>();
   // the visitor can pause the loop (WCAG 2.2.2: moving content over 5 s needs a pause control)
   const [paused, setPaused] = useState(false);
   const pausedRef = useRef(false);
@@ -56,22 +56,49 @@ export default function Hero() {
     };
   }, []);
 
-  // One entrance sequence: headline, text, actions, then the country line.
+  // The film drifts a little slower than the page while the hero scrolls away (transform only).
+  useEffect(() => {
+    const el = film.current;
+    if (!el || prefersReducedMotion() || !window.matchMedia("(min-width: 768px)").matches) return;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const y = Math.min(window.scrollY, 900);
+      el.style.translate = `0 ${y * 0.1}px`;
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    update();
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(raf);
+      el.style.translate = "";
+    };
+  }, []);
+
+  // Entrance, one wave: the headline words rise out of their lines (lead), the text and
+  // actions follow with a smaller rise (support), the proof line and the film only fade.
   useEffect(() => {
     const el = root.current;
     if (!el) return;
-    const reveal = el.querySelectorAll<HTMLElement>("[data-reveal]");
+    const h1 = el.querySelector<HTMLElement>(".h-words")!;
+    const words = h1.querySelectorAll<HTMLElement>(".w > span");
+    const support = el.querySelectorAll<HTMLElement>("[data-reveal]");
+    const deco = el.querySelectorAll<HTMLElement>("[data-reveal-fade]");
     if (prefersReducedMotion()) {
-      reveal.forEach((n) => (n.style.opacity = "1"));
+      h1.removeAttribute("data-pending");
+      [...support, ...deco].forEach((n) => (n.style.opacity = "1"));
       return;
     }
     let tl: ReturnType<typeof createTimeline> | null = null;
     const play = () => {
-      tl = createTimeline({ defaults: { ease: "outCubic", duration: 900 } }).add(reveal, {
-        opacity: [0, 1],
-        translateY: [16, 0],
-        delay: stagger(70),
-      });
+      tl = createTimeline({ defaults: { ease: EASE_OUT } })
+        .add(words, { translateY: ["110%", "0%"], duration: 900, delay: stagger(60) }, 0)
+        .add(support, { opacity: [0, 1], translateY: [14, 0], duration: 800, delay: stagger(90) }, 320)
+        .add(deco, { opacity: [0, 1], duration: 700 }, 520);
+      h1.removeAttribute("data-pending"); // the inline transforms now own the words
     };
     // on a first visit, wait for the intro to hand over
     if (document.documentElement.classList.contains("intro-active")) window.addEventListener("intro:done", play, { once: true });
@@ -84,27 +111,29 @@ export default function Hero() {
 
   return (
     <section ref={root} id="top" className="dark relative isolate overflow-hidden !bg-[#05090f] pt-[72px]">
-      {/* background = the film's own background colour, so the video sits in it seamlessly */}
+      {/* a faint signal grid behind the copy; the background itself is the film's own colour */}
+      <div aria-hidden="true" className="dots pointer-events-none absolute inset-y-0 left-0 w-[70%] opacity-70" />
+
       <div className="container-x relative flex items-center pb-10 pt-12 md:min-h-[min(780px,calc(100svh-72px-96px))] md:py-16">
         <div className="relative z-10 max-w-[600px] md:max-w-[min(640px,39vw)]">
           <h1
-            data-reveal
-            className="max-w-[12em] font-display text-[clamp(2.25rem,3.5vw,3.5rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-white"
+            data-pending
+            className="h-words max-w-[12em] font-display text-[clamp(2.4rem,3.9vw,3.9rem)] font-semibold leading-[1.06] tracking-[-0.035em] text-white"
           >
-            Teleport facilities for LEO satellite operators.
+            <Words text={HEADLINE} />
           </h1>
-          <p data-reveal className="mt-7 max-w-[34rem] text-[1.0625rem] leading-[1.65] text-[#b9c3d1]">
+          <p data-reveal className="mt-7 max-w-[32rem] text-[1.0625rem] leading-[1.65] text-[#b9c3d1]">
             Our land, your colocation. We hold the land, licences and zoning in the countries your constellation needs,
             and run the power, fibre, security and on-site teams. You bring the antennas.
           </p>
-          <div data-reveal className="mt-10 flex flex-wrap items-center gap-x-7 gap-y-4">
-            <a href="#quote" className="btn btn-primary">
+          <div ref={actions} data-reveal className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-4">
+            <a href="#quote" className="btn btn-primary magnet">
               Check site availability
             </a>
             <button
               type="button"
               onClick={() => openFilm()}
-              className="group inline-flex items-center gap-3 rounded-md text-[0.95rem] font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+              className="group magnet inline-flex items-center gap-3 rounded-md text-[0.95rem] font-semibold text-white"
             >
               <span className="grid h-11 w-11 place-items-center rounded-full border border-white/35 transition-colors group-hover:border-white group-hover:bg-white group-hover:text-[#05090f]">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="ml-0.5">
@@ -114,18 +143,30 @@ export default function Hero() {
               Watch the film (2 min 39)
             </button>
           </div>
+          <p data-reveal-fade className="mt-9 text-[13px] text-[#8d9bb0]">
+            99.5% power SLA <span className="mx-2 text-white/25">·</span> ISO/IEC 27001 certified{" "}
+            <span className="mx-2 text-white/25">·</span>
+            <a href="#network" className="whitespace-nowrap text-white underline decoration-white/30 underline-offset-4 transition-colors hover:decoration-white">
+              {SITES.length} sites, {IN_DEVELOPMENT} in development
+            </a>
+          </p>
         </div>
       </div>
 
       {/* the LiveTelco film, flush with the right edge (below the copy on phones).
           Clicking it opens the full film, same as the "Watch the film" button. */}
       {/* data-film-origin: the film player grows out of this box and shrinks back into it (FilmModal) */}
-      <div data-film-origin className="relative mx-[clamp(20px,5vw,96px)] mb-8 aspect-video md:absolute md:right-0 md:top-[calc(50%-40px)] md:mx-0 md:mb-0 md:w-[53vw] md:max-w-[1040px] md:-translate-y-1/2">
+      <div
+        ref={film}
+        data-film-origin
+        data-reveal-fade
+        className="relative mx-[clamp(20px,5vw,96px)] mb-8 aspect-video md:absolute md:right-0 md:top-[calc(50%-40px)] md:mx-0 md:mb-0 md:w-[53vw] md:max-w-[1040px] md:-translate-y-1/2"
+      >
         <button
           type="button"
           onClick={() => openFilm()}
           aria-label="Watch the film (2 min 39)"
-          className="block h-full w-full cursor-pointer overflow-hidden rounded-xl md:rounded-none md:rounded-l-xl"
+          className="block h-full w-full cursor-pointer overflow-hidden rounded-2xl md:rounded-none md:rounded-l-2xl"
         >
           <video
             ref={video}
@@ -158,24 +199,9 @@ export default function Hero() {
         </button>
       </div>
 
-      {/* proof: the strongest facts in one row */}
-      <div className="relative border-t border-white/10">
-        <div data-reveal className="container-x flex flex-col gap-3 py-5 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-8">
-          <p className="text-[#b9c3d1]">
-            {PROOF.map((s, i) => (
-              <span key={s} className="whitespace-nowrap">
-                {i > 0 && <span aria-hidden="true" className="mx-3 inline-block h-3 w-px translate-y-[1px] bg-white/20 align-middle" />}
-                {s}
-              </span>
-            ))}
-          </p>
-          <a
-            href="#network"
-            className="self-start whitespace-nowrap py-1 font-medium text-white underline decoration-white/30 underline-offset-4 transition-colors hover:decoration-white sm:self-auto"
-          >
-            See all {SITES.length} sites, {IN_DEVELOPMENT} in development
-          </a>
-        </div>
+      {/* the operations strip: every live site and its local time */}
+      <div data-reveal-fade className="relative">
+        <SiteTicker />
       </div>
     </section>
   );

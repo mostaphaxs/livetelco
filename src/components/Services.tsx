@@ -10,6 +10,7 @@ import {
   TechnicalArt,
 } from "./ServiceArt";
 import { useInView } from "@/lib/motion";
+import { useSpotlight } from "@/lib/spotlight";
 import { fade, power, q, signal, timeline, trace } from "@/lib/reveal";
 
 // each service is drawn, in the film's line style, by the same signal stroke as the logo
@@ -37,6 +38,7 @@ const SERVICES: { title: string; body: string; art: ReactNode }[] = [
 ];
 
 export default function Services() {
+  const spot = useSpotlight<HTMLDivElement>();
   // the signal crosses, the colocation illustration switches on like a screen,
   // then the service cards appear and their drawings are traced in, one after the other
   const ref = useInView<HTMLElement>((el) => {
@@ -118,12 +120,12 @@ export default function Services() {
           </div>
         </article>
 
-        <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div ref={spot} className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {SERVICES.map((s) => (
             <article
               key={s.title}
               data-anim="card"
-              className="card card-hover overflow-hidden"
+              className="card card-hover spot overflow-hidden"
             >
               <div className="aspect-[2/1] border-b border-line bg-[#0b1220] px-3 pt-2">
                 {s.art}

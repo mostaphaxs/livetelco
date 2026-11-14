@@ -24,6 +24,10 @@
   --blue: #5aa9ff;
   --cyan: #07b6ff;
   --indigo: #4129a2;
+  /* motion tokens (Emil Kowalski's curves): UI enters on --ease-out, moves on --ease-in-out */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --radius: 16px;
 }
 
 /* navy bands */
@@ -158,13 +162,23 @@ p {
 .sec {
   padding-block: clamp(80px, 9vw, 120px);
 }
+/* editorial label: a short rule, then the words */
 .eyebrow {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--accent-ink);
+}
+.eyebrow::before {
+  content: "";
+  width: 22px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.7;
 }
 .h-display {
   font-family: var(--font-poppins), system-ui, sans-serif;
@@ -177,14 +191,14 @@ p {
 .h-section {
   font-family: var(--font-poppins), system-ui, sans-serif;
   font-weight: 600;
-  letter-spacing: -0.025em;
-  line-height: 1.12;
-  font-size: clamp(1.65rem, 2.9vw, 2.35rem);
+  letter-spacing: -0.028em;
+  line-height: 1.1;
+  font-size: clamp(1.85rem, 3.3vw, 2.8rem);
   color: var(--heading);
 }
 .lead {
-  font-size: 1.0625rem;
-  line-height: 1.65;
+  font-size: 1.125rem;
+  line-height: 1.6;
   color: var(--muted);
 }
 /* kept for older markup: renders as plain accent text, no gradient */
@@ -196,7 +210,7 @@ p {
 .card {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius);
   /* no transform here: anime.js drives the cards' entrance transform, a transition would lag it */
   transition: border-color 0.25s, box-shadow 0.25s;
 }
@@ -215,7 +229,7 @@ p {
 }
 .frame {
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: var(--radius);
   border: 1px solid var(--line);
   background: #0b1220;
 }
@@ -282,7 +296,8 @@ html.intro-logo-pending header a[aria-label="LiveTelco home"] {
 }
 
 /* elements animated in by anime.js start hidden (only when JS is on) */
-.js [data-reveal] {
+.js [data-reveal],
+.js [data-reveal-fade] {
   opacity: 0;
 }
 
@@ -290,7 +305,8 @@ html.intro-logo-pending header a[aria-label="LiveTelco home"] {
   html {
     scroll-behavior: auto;
   }
-  .js [data-reveal] {
+  .js [data-reveal],
+  .js [data-reveal-fade] {
     opacity: 1;
   }
 }
@@ -564,3 +580,272 @@ html.intro-logo-pending header a[aria-label="LiveTelco home"] {
     transition-duration: 0.4s;
   }
 }
+
+/* ---------- modern surface details ---------- */
+
+/* spotlight card: a soft light follows the pointer across the card (mouse only).
+   --mx/--my are set on the card itself (lib/spotlight.ts), never on a parent. */
+.spot {
+  position: relative;
+  --mx: 50%;
+  --my: 50%;
+  --spot-a: 0;
+}
+.spot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: var(--spot-a);
+  transition: opacity 0.35s var(--ease-out);
+  background: radial-gradient(340px circle at var(--mx) var(--my), rgba(7, 182, 255, 0.11), transparent 60%);
+}
+/* the same light on the border: a masked ring */
+.spot::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  opacity: var(--spot-a);
+  transition: opacity 0.35s var(--ease-out);
+  background: radial-gradient(260px circle at var(--mx) var(--my), rgba(7, 182, 255, 0.7), transparent 60%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+.spot > * {
+  position: relative;
+  z-index: 1;
+}
+@media (hover: hover) and (pointer: fine) {
+  .spot:hover {
+    --spot-a: 1;
+  }
+}
+
+/* faint dot grid, fading out towards its edges */
+.dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.13) 1px, transparent 1.2px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 70% at 30% 45%, #000 20%, transparent 75%);
+  mask-image: radial-gradient(ellipse 70% 70% at 30% 45%, #000 20%, transparent 75%);
+}
+
+/* headline revealed word by word: each word rises out of its own clipped line */
+.h-words .w {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+.h-words .w > span {
+  display: inline-block;
+  will-change: transform;
+}
+.js .h-words[data-pending] .w > span {
+  transform: translateY(110%);
+}
+
+/* magnetic buttons: nudged towards the pointer by lib/magnet.ts, settle back on their own */
+.magnet {
+  transition: translate 0.35s var(--ease-out);
+}
+
+/* live ticker: the track is doubled in the markup so the loop is seamless */
+.ticker {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker 70s linear infinite;
+}
+.ticker:hover .ticker-track {
+  animation-play-state: paused;
+}
+@keyframes ticker {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* scroll position, drawn as the signal along the bottom edge of the header */
+.scroll-signal {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  transform-origin: left;
+  transform: scaleX(var(--p, 0));
+  background: linear-gradient(90deg, rgba(7, 182, 255, 0.2), #07b6ff);
+  pointer-events: none;
+}
+
+/* aurora behind the closing call to action: two blurred lights drifting slowly */
+.aurora {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.aurora::before,
+.aurora::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 60%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+}
+.aurora::before {
+  left: -15%;
+  top: -40%;
+  background: rgba(7, 182, 255, 0.28);
+  animation: drift-a 14s var(--ease-in-out) infinite alternate;
+}
+.aurora::after {
+  right: -20%;
+  bottom: -50%;
+  background: rgba(65, 41, 162, 0.5);
+  animation: drift-b 18s var(--ease-in-out) infinite alternate;
+}
+@keyframes drift-a {
+  to {
+    transform: translate(12%, 18%);
+  }
+}
+@keyframes drift-b {
+  to {
+    transform: translate(-14%, -16%);
+  }
+}
+
+/* a live dot that breathes */
+.live-dot {
+  position: relative;
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+}
+.live-dot::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1px solid var(--green);
+  opacity: 0;
+  animation: breathe 2.6s ease-out infinite;
+}
+@keyframes breathe {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  70%,
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none;
+  }
+  .ticker {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .ticker::-webkit-scrollbar {
+    display: none;
+  }
+  .aurora::before,
+  .aurora::after,
+  .live-dot::after {
+    animation: none;
+  }
+  .magnet {
+    transition: none;
+  }
+  .js .h-words[data-pending] .w > span {
+    transform: none;
+  }
+}
+
+/* ---------- the client-portal film (components/PortalFilm.tsx) ---------- */
+.pf-screen {
+  animation: pf-fade 0.28s var(--ease-out) both;
+}
+.pf-rise {
+  animation: pf-rise 0.42s var(--ease-out) both;
+}
+.pf-fade {
+  animation: pf-fade 0.35s var(--ease-out) both;
+}
+.pf-pop {
+  animation: pf-pop 0.3s var(--ease-out) both;
+}
+.pf-draw {
+  stroke-dasharray: 1;
+  animation: pf-draw 1.6s var(--ease-in-out) 0.4s both;
+}
+.pf-wipe {
+  animation: pf-wipe 1.4s var(--ease-in-out) 0.45s both;
+}
+/* a click presses the thing under the cursor, like a real button */
+.pf-stage [data-target] {
+  transition: scale 0.14s var(--ease-out), filter 0.14s var(--ease-out), background-color 0.2s;
+}
+.pf-stage [data-pressed] {
+  scale: 0.97;
+  filter: brightness(0.86);
+}
+/* the service drawings are reused as camera views: always visible here, no entrance */
+.js .pf-cam [data-anim] {
+  opacity: 1;
+}
+@keyframes pf-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes pf-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes pf-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+@keyframes pf-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes pf-wipe {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+

@@ -91,6 +91,32 @@ function useScrollState(locked: boolean) {
   return { scrolled, hidden: hidden && !locked };
 }
 
+/** The signal along the bottom of the bar shows how far down the page you are. */
+function ScrollSignal() {
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    const el = ref.current!;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      el.style.setProperty("--p", String(max > 0 ? Math.min(1, window.scrollY / max) : 0));
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+  return <span ref={ref} aria-hidden="true" className="scroll-signal" />;
+}
+
 function Dropdown({ item, active, onOpenChange }: { item: Item; active: boolean; onOpenChange: (o: boolean) => void }) {
   const [open, setOpenState] = useState(false);
   const root = useRef<HTMLLIElement>(null);
@@ -356,7 +382,7 @@ export default function Nav() {
       }`}
     >
       <div
-        className={`border-b transition-[background-color,border-color,box-shadow] duration-500 ${
+        className={`relative border-b transition-[background-color,border-color,box-shadow] duration-500 ${
           solid
             ? "border-white/10 bg-[#0a1626]/92 shadow-[0_10px_40px_-10px_rgba(0,0,0,.6)] backdrop-blur-xl backdrop-saturate-150"
             : "border-transparent bg-transparent"
@@ -412,6 +438,7 @@ export default function Nav() {
             </span>
           </button>
         </nav>
+        {solid && <ScrollSignal />}
       </div>
 
     </header>
