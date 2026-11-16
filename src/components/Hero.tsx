@@ -64,7 +64,9 @@ export default function Hero() {
     const update = () => {
       raf = 0;
       const y = Math.min(window.scrollY, 900);
-      el.style.translate = `0 ${y * 0.1}px`;
+      // a variable, not `translate`: the box is centred with Tailwind's -translate-y-1/2, which is
+      // the same CSS property, so setting it inline would drop the centring and push the film down
+      el.style.setProperty("--drift", `${y * 0.1}px`);
     };
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(update);
@@ -74,7 +76,7 @@ export default function Hero() {
     return () => {
       window.removeEventListener("scroll", onScroll);
       cancelAnimationFrame(raf);
-      el.style.translate = "";
+      el.style.removeProperty("--drift");
     };
   }, []);
 
@@ -160,7 +162,7 @@ export default function Hero() {
         ref={film}
         data-film-origin
         data-reveal-fade
-        className="relative mx-[clamp(20px,5vw,96px)] mb-8 aspect-video md:absolute md:right-0 md:top-[calc(50%-40px)] md:mx-0 md:mb-0 md:w-[53vw] md:max-w-[1040px] md:-translate-y-1/2"
+        className="relative mx-[clamp(20px,5vw,96px)] mb-8 aspect-video md:absolute md:right-0 md:top-[calc(50%-40px)] md:mx-0 md:mb-0 md:w-[53vw] md:max-w-[1040px] md:translate-y-[calc(-50%_+_var(--drift,0px))]"
       >
         <button
           type="button"

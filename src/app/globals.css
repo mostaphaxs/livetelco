@@ -166,19 +166,20 @@ p {
 .eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  font-size: 0.78rem;
+  gap: 14px;
+  font-family: var(--font-poppins), system-ui, sans-serif;
+  font-size: clamp(1rem, 1.15vw, 1.2rem);
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
+  line-height: 1.2;
   text-transform: uppercase;
   color: var(--accent-ink);
 }
 .eyebrow::before {
   content: "";
-  width: 22px;
-  height: 1px;
-  background: currentColor;
-  opacity: 0.7;
+  width: 36px;
+  height: 2px;
+  background: var(--accent);
 }
 .h-display {
   font-family: var(--font-poppins), system-ui, sans-serif;
@@ -247,7 +248,9 @@ p {
   font-weight: 600;
   white-space: nowrap;
   /* `scale` (not `transform`): a press never fights the entrance transforms anime.js sets */
-  transition: background-color 0.2s, border-color 0.2s, color 0.2s, scale 0.16s cubic-bezier(0.23, 1, 0.32, 1);
+  /* `translate` is here for .btn.magnet: a separate .magnet rule would replace this whole list */
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s, scale 0.16s cubic-bezier(0.23, 1, 0.32, 1),
+    translate 0.35s cubic-bezier(0.23, 1, 0.32, 1);
 }
 .btn:active,
 .btn-site:active {
@@ -652,7 +655,7 @@ html.intro-logo-pending header a[aria-label="LiveTelco home"] {
 }
 
 /* magnetic buttons: nudged towards the pointer by lib/magnet.ts, settle back on their own */
-.magnet {
+.magnet:not(.btn) {
   transition: translate 0.35s var(--ease-out);
 }
 
@@ -775,7 +778,7 @@ html.intro-logo-pending header a[aria-label="LiveTelco home"] {
   .live-dot::after {
     animation: none;
   }
-  .magnet {
+  .magnet:not(.btn) {
     transition: none;
   }
   .js .h-words[data-pending] .w > span {
@@ -810,10 +813,6 @@ html.intro-logo-pending header a[aria-label="LiveTelco home"] {
 .pf-stage [data-pressed] {
   scale: 0.97;
   filter: brightness(0.86);
-}
-/* the service drawings are reused as camera views: always visible here, no entrance */
-.js .pf-cam [data-anim] {
-  opacity: 1;
 }
 @keyframes pf-fade {
   from {

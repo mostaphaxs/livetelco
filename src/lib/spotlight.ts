@@ -42,7 +42,7 @@ export function useSpotlight<T extends HTMLElement>() {
  * while it is near, and settles back when it leaves (CSS transition on `translate`).
  * Feedback for a deliberate action; mouse only, off with "reduce motion".
  */
-export function useMagnet<T extends HTMLElement>(strength = 0.22, reach = 56) {
+export function useMagnet<T extends HTMLElement>(strength = 0.22, reach = 24, max = 6) {
   const ref = useRef<T>(null);
   useEffect(() => {
     const host = ref.current;
@@ -54,13 +54,29 @@ export function useMagnet<T extends HTMLElement>(strength = 0.22, reach = 56) {
     const paint = () => {
       raf = 0;
       if (!last) return;
+      // Only the one button closest to the pointer moves, and never further than `max` px:
+      // two neighbours pulled at once (or one pulled by its full width) slide over each other.
+      let pick: HTMLElement | null = null;
+      let pickGap = Infinity;
+      let px = 0;
+      let py = 0;
       for (const el of items) {
+        // measured without the current pull, so the button does not chase its own movement
         const r = el.getBoundingClientRect();
-        const dx = last.clientX - (r.left + r.width / 2);
-        const dy = last.clientY - (r.top + r.height / 2);
-        const near = Math.abs(dx) < r.width / 2 + reach && Math.abs(dy) < r.height / 2 + reach;
-        el.style.translate = near ? `${dx * strength}px ${dy * strength}px` : "";
+        const [ox, oy] = (el.style.translate || "0px 0px").split(" ").map(parseFloat);
+        const dx = last.clientX - (r.left - ox + r.width / 2);
+        const dy = last.clientY - (r.top - (oy || 0) + r.height / 2);
+        const gx = Math.max(0, Math.abs(dx) - r.width / 2);
+        const gy = Math.max(0, Math.abs(dy) - r.height / 2);
+        const gap = Math.hypot(gx, gy); // 0 when the pointer is on the button
+        if (gap < reach && gap < pickGap) {
+          pick = el;
+          pickGap = gap;
+          px = Math.max(-max, Math.min(max, dx * strength));
+          py = Math.max(-max, Math.min(max, dy * strength));
+        }
       }
+      for (const el of items) el.style.translate = el === pick ? `${px}px ${py}px` : "";
     };
     const onMove = (e: PointerEvent) => {
       last = e;
@@ -74,6 +90,6 @@ export function useMagnet<T extends HTMLElement>(strength = 0.22, reach = 56) {
       host.removeEventListener("pointerleave", onLeave);
       cancelAnimationFrame(raf);
     };
-  }, [strength, reach]);
+  }, [strength, reach, max]);
   return ref;
 }

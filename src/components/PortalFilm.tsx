@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ConnectivityArt, SecurityArt, TechnicalArt } from "./ServiceArt";
 
 /*
   The client portal, as a short film that plays by itself: a cursor walks through the six
@@ -330,10 +329,154 @@ function Visits({ local }: { local: number }) {
   );
 }
 
+/* Camera views: night (infrared) pictures drawn as lit, solid shapes, so they read as
+   footage in a player, not as diagrams. One frame per camera, 420×300, cropped to fit. */
+const IR = { hi: "#dfeae5", lit: "#9db0a8", mid: "#66786f", dim: "#3b4a44", dark: "#1d2824" };
+
+const CamFrame = ({ id, lamp, children }: { id: string; lamp: [number, number]; children: ReactNode }) => (
+  <svg viewBox="0 0 420 300" preserveAspectRatio="xMidYMid slice" className="block h-full w-full" aria-hidden="true">
+    <defs>
+      <linearGradient id={`${id}-sky`} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#070b0a" />
+        <stop offset="1" stopColor="#1b2924" />
+      </linearGradient>
+      <linearGradient id={`${id}-ground`} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#2b3a34" />
+        <stop offset="1" stopColor="#0d1412" />
+      </linearGradient>
+      <radialGradient id={`${id}-pool`}>
+        <stop offset="0" stopColor="#c9d8d1" stopOpacity=".5" />
+        <stop offset="1" stopColor="#c9d8d1" stopOpacity="0" />
+      </radialGradient>
+      <radialGradient id={`${id}-glow`}>
+        <stop offset="0" stopColor="#fff" stopOpacity=".95" />
+        <stop offset=".25" stopColor="#dfeae5" stopOpacity=".45" />
+        <stop offset="1" stopColor="#dfeae5" stopOpacity="0" />
+      </radialGradient>
+      <radialGradient id={`${id}-vig`} cx=".5" cy=".5" r=".75">
+        <stop offset=".45" stopColor="#000" stopOpacity="0" />
+        <stop offset="1" stopColor="#000" stopOpacity=".75" />
+      </radialGradient>
+      <pattern id={`${id}-mesh`} width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <path d="M0 0H7M0 0V7" stroke={IR.lit} strokeWidth=".6" opacity=".55" />
+      </pattern>
+      <pattern id={`${id}-scan`} width="3" height="3" patternUnits="userSpaceOnUse">
+        <rect width="3" height="1" fill="#000" opacity=".22" />
+      </pattern>
+    </defs>
+    <rect width="420" height="300" fill={`url(#${id}-sky)`} />
+    <rect y="178" width="420" height="122" fill={`url(#${id}-ground)`} />
+    {/* the pool of light on the ground under the lamp */}
+    <ellipse cx={lamp[0]} cy="232" rx="150" ry="38" fill={`url(#${id}-pool)`} />
+    {children}
+    <circle cx={lamp[0]} cy={lamp[1]} r="26" fill={`url(#${id}-glow)`} />
+    <rect width="420" height="300" fill={`url(#${id}-scan)`} />
+    <rect width="420" height="300" fill={`url(#${id}-vig)`} />
+  </svg>
+);
+
+// a run of chain-link fence between x1 and x2, standing on y
+const Fence = ({ id, x1, x2, y, h = 44 }: { id: string; x1: number; x2: number; y: number; h?: number }) => (
+  <g>
+    <rect x={x1} y={y - h} width={x2 - x1} height={h} fill={`url(#${id}-mesh)`} />
+    <path d={`M${x1} ${y - h}H${x2}`} stroke={IR.lit} strokeWidth="1.6" />
+    {Array.from({ length: Math.floor((x2 - x1) / 42) + 1 }, (_, i) => (
+      <rect key={i} x={x1 + i * 42 - 1.2} y={y - h - 5} width="2.4" height={h + 5} fill={IR.mid} />
+    ))}
+  </g>
+);
+
+const Dish = ({ x, y, s = 1 }: { x: number; y: number; s?: number }) => (
+  <g transform={`translate(${x} ${y}) scale(${s})`}>
+    <ellipse cx="6" cy="3" rx="46" ry="8" fill="#000" opacity=".45" />
+    <path d="M-30 0H30L26-7H-26z" fill={IR.mid} />
+    <path d="M-9-7H9L5-58H-5z" fill={IR.dim} />
+    <path d="M-5-58H0V-7H-9z" fill={IR.mid} />
+    <g transform="translate(0 -70) rotate(-32)">
+      <path d="M-52 0A52 30 0 0 0 52 0z" fill={IR.dim} />
+      <ellipse rx="52" ry="15" fill={IR.lit} />
+      <ellipse rx="45" ry="11" cy="1" fill={IR.mid} />
+      <path d="M-40-4L0-46M40-4L0-46M0 8L0-46" stroke={IR.lit} strokeWidth="1.6" fill="none" />
+      <rect x="-5" y="-54" width="10" height="10" rx="2" fill={IR.hi} />
+    </g>
+  </g>
+);
+
 const CAMS = [
-  { name: "Camera 1 · Shelter", art: <ConnectivityArt /> },
-  { name: "Camera 2 · Antenna yard", art: <TechnicalArt /> },
-  { name: "Camera 3 · Gate", art: <SecurityArt /> },
+  {
+    name: "Camera 1 · Shelter",
+    tag: "CAM 01",
+    art: (
+      <CamFrame id="c1" lamp={[150, 112]}>
+        <Fence id="c1" x1={0} x2={420} y={180} />
+        <ellipse cx="215" cy="236" rx="150" ry="16" fill="#000" opacity=".5" />
+        {/* the equipment shelter: roof, lit front, side in shadow */}
+        <path d="M80 100L140 82H340L290 100z" fill={IR.lit} />
+        <path d="M80 100H290V232H80z" fill={IR.mid} />
+        <path d="M290 100L340 82V210L290 232z" fill={IR.dim} />
+        <path d="M80 100H290V106H80z" fill={IR.lit} opacity=".6" />
+        <rect x="126" y="132" width="48" height="100" fill={IR.dim} />
+        <rect x="129" y="135" width="42" height="97" fill="#4b5c55" />
+        <rect x="163" y="182" width="4" height="12" rx="1" fill={IR.hi} />
+        <rect x="205" y="128" width="62" height="38" fill={IR.dim} />
+        <path d="M209 136H263M209 144H263M209 152H263M209 160H263" stroke={IR.lit} strokeWidth="1.4" />
+        <path d="M300 150L330 139V186L300 199z" fill={IR.mid} />
+        <path d="M304 158L326 150M304 168L326 160M304 178L326 170" stroke={IR.dark} strokeWidth="2" />
+        {/* cable tray running to the antennas */}
+        <path d="M340 120H420" stroke={IR.mid} strokeWidth="4" />
+        <path d="M360 120V200M400 120V196" stroke={IR.dim} strokeWidth="2.5" />
+        <rect x="143" y="112" width="14" height="6" rx="1" fill={IR.hi} />
+      </CamFrame>
+    ),
+  },
+  {
+    name: "Camera 2 · Antenna yard",
+    tag: "CAM 02",
+    art: (
+      <CamFrame id="c2" lamp={[330, 60]}>
+        <Fence id="c2" x1={0} x2={420} y={180} h={36} />
+        {/* concrete pads */}
+        <path d="M30 262H190L172 236H52z" fill="#33423c" />
+        <path d="M196 232H316L304 214H212z" fill="#2c3a35" />
+        <path d="M296 204H384L376 192H306z" fill="#27342f" />
+        <Dish x={338} y={198} s={0.62} />
+        <Dish x={254} y={224} s={0.86} />
+        <Dish x={110} y={250} s={1.2} />
+        {/* the lamp mast */}
+        <rect x="328" y="60" width="3.5" height="124" fill={IR.mid} />
+        <path d="M312 60H348" stroke={IR.lit} strokeWidth="3" />
+      </CamFrame>
+    ),
+  },
+  {
+    name: "Camera 3 · Gate",
+    tag: "CAM 03",
+    art: (
+      <CamFrame id="c3" lamp={[306, 70]}>
+        {/* the access road through the gate */}
+        <path d="M120 300H300L236 178H186z" fill="#34433d" />
+        <path d="M210 300L211 178" stroke={IR.lit} strokeWidth="2" strokeDasharray="14 12" opacity=".5" />
+        <Fence id="c3" x1={0} x2={168} y={196} h={58} />
+        {/* sliding gate, closed */}
+        <path d="M170 132H252V196H170z" fill="#000" opacity=".25" />
+        <path d="M170 132H252M170 196H252M170 164H252" stroke={IR.hi} strokeWidth="2.4" />
+        <path d="M178 132V196M190 132V196M202 132V196M214 132V196M226 132V196M238 132V196M250 132V196" stroke={IR.lit} strokeWidth="1.8" />
+        <rect x="164" y="124" width="6" height="76" fill={IR.lit} />
+        <rect x="252" y="124" width="6" height="76" fill={IR.lit} />
+        {/* guard house with a lit window */}
+        <ellipse cx="345" cy="216" rx="80" ry="10" fill="#000" opacity=".5" />
+        <path d="M268 112L284 100H412L404 112z" fill={IR.lit} />
+        <path d="M274 112H404V212H274z" fill={IR.mid} />
+        <rect x="288" y="130" width="54" height="36" fill={IR.hi} />
+        <path d="M315 130V166M288 148H342" stroke={IR.mid} strokeWidth="2" />
+        <rect x="358" y="134" width="32" height="78" fill={IR.dim} />
+        <rect x="304" y="70" width="3.5" height="34" fill={IR.mid} />
+        {/* bollards */}
+        <rect x="140" y="226" width="7" height="26" rx="2" fill={IR.lit} />
+        <rect x="274" y="226" width="7" height="26" rx="2" fill={IR.lit} />
+      </CamFrame>
+    ),
+  },
 ];
 function Cctv({ local, clock }: { local: number; clock: number }) {
   const cam = local >= 1600 ? 1 : 0;
@@ -343,9 +486,9 @@ function Cctv({ local, clock }: { local: number; clock: number }) {
       <Title t="Security & CCTV" s="Recordings are kept 90 days; clips are released through a ticket." />
       <div className="grid grid-cols-[1.75fr_1fr] gap-3">
         <Card className="p-4">
-          {/* camera views are drawings, not footage */}
-          <div key={cam} className="pf-fade pf-cam relative h-[300px] overflow-hidden rounded-lg bg-[#0b1220] px-16 py-6">
+          <div key={cam} className="pf-fade relative h-[300px] overflow-hidden rounded-lg bg-[#070b0a]">
             {CAMS[cam].art}
+            <span className="absolute bottom-3 left-3 text-[10.5px] font-medium tracking-[0.08em] text-white/75">{CAMS[cam].tag} · IR NIGHT</span>
             <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded bg-black/50 px-2 py-0.5 text-[10.5px] font-semibold text-white">
               <span className="h-1.5 w-1.5 rounded-full bg-[#ff5d5d]" /> LIVE
             </span>
@@ -357,7 +500,7 @@ function Cctv({ local, clock }: { local: number; clock: number }) {
           </div>
           <div className="mt-2.5 flex gap-2.5">
             {CAMS.map((c, i) => (
-              <div key={c.name} data-target={`cam-${i}`} className={`pf-cam h-[62px] w-[110px] overflow-hidden rounded-md bg-[#0b1220] p-1.5 ${cam === i ? "outline outline-2 outline-[#3fc5ff]" : ""}`}>
+              <div key={c.name} data-target={`cam-${i}`} className={`h-[62px] w-[110px] overflow-hidden rounded-md bg-[#070b0a] ${cam === i ? "outline outline-2 outline-[#3fc5ff]" : ""}`}>
                 {c.art}
               </div>
             ))}

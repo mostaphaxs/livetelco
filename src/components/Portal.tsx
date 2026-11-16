@@ -19,7 +19,8 @@ export default function Portal() {
     <section ref={ref} id="portal" className="relative sec" data-bg-from="navy">
       <Signal />
       <div className="container-x">
-        <div className="grid items-end gap-6 lg:grid-cols-[1.2fr_1fr]">
+        {/* words on the left, the portal film on the right (stacked below the words on small screens) */}
+        <div className="grid items-center gap-x-[clamp(40px,5vw,88px)] gap-y-12 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)]">
           <div>
             <p data-anim="fade" className="eyebrow">
               Client portal
@@ -27,21 +28,19 @@ export default function Portal() {
             <h2 data-anim="fade" className="h-section mt-4">
               Every teleport, followed live.
             </h2>
-          </div>
-          <div className="lg:justify-self-end">
-            <p data-anim="fade" className="lead max-w-md">
+            <p data-anim="fade" className="lead mt-6 max-w-md">
               Power, network, cameras, visits and tickets for each of your sites, with two-step sign-in and access
               managed by your own admin.
             </p>
-            <a href="https://livetelco.com/portal/" data-anim="fade" className="btn btn-primary mt-6">
+            <a href="https://livetelco.com/portal/" data-anim="fade" className="btn btn-primary mt-8">
               Sign in to the portal
             </a>
           </div>
-        </div>
 
-        {/* the portal itself, as a short film that plays on its own */}
-        <div data-anim="power" className="mx-auto mt-12 max-w-[1200px]">
-          <PortalFilm />
+          {/* the portal itself, as a short film that plays on its own */}
+          <div data-anim="power">
+            <PortalFilm />
+          </div>
         </div>
       </div>
     </section>
