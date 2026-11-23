@@ -1,53 +1,49 @@
 "use client";
 
 import Image from "next/image";
-import type { ReactNode } from "react";
 import Signal from "./Signal";
-import {
-  AcquisitionArt,
-  ConnectivityArt,
-  SecurityArt,
-  TechnicalArt,
-} from "./ServiceArt";
 import { useInView } from "@/lib/motion";
 import { useSpotlight } from "@/lib/spotlight";
-import { fade, power, q, signal, timeline, trace } from "@/lib/reveal";
+import { fade, power, q, signal, timeline } from "@/lib/reveal";
 
-// each service is drawn, in the film's line style, by the same signal stroke as the logo
-const SERVICES: { title: string; body: string; art: ReactNode }[] = [
+// Each service displays real teleport infrastructure imagery from the LiveTelco film
+const SERVICES = [
   {
     title: "Security",
     body: "Premium with 24/7 guards, or Standard with automated access control, CCTV and NOC monitoring.",
-    art: <SecurityArt />,
+    img: "/media/scenes/service-security.webp",
+    alt: "LiveTelco security perimeter with anti-climb fence, gates and 24/7 CCTV cameras",
   },
   {
     title: "Technical services",
     body: "Our teams install and maintain antennas on request — trained by and acting under the guidance of each operator.",
-    art: <TechnicalArt />,
+    img: "/media/scenes/service-technical.webp",
+    alt: "Satellite ground station antennas and parabolic dishes installed on prepared pads",
   },
   {
     title: "Site acquisition",
     body: "Need a new country? We find and acquire the land, then handle permits and greenfield construction.",
-    art: <AcquisitionArt />,
+    img: "/media/scenes/service-acquisition.webp",
+    alt: "Aerial drone view of a teleport plot land acquisition with cleared horizon and zoning",
   },
   {
     title: "Connectivity",
     body: "100G+ fibre with redundancy across Tier 1 operators, and 500 kVA+ of power on a 99.5% SLA.",
-    art: <ConnectivityArt />,
+    img: "/media/scenes/service-connectivity.webp",
+    alt: "High-voltage grid connection, backup diesel generator and Tier 1 redundant fibre lines",
   },
 ];
 
 export default function Services() {
   const spot = useSpotlight<HTMLDivElement>();
   // the signal crosses, the colocation illustration switches on like a screen,
-  // then the service cards appear and their drawings are traced in, one after the other
+  // then the service cards appear with their realistic imagery
   const ref = useInView<HTMLElement>((el) => {
     const tl = timeline();
     signal(tl, el, 0);
     fade(tl, q(el, '[data-anim="fade"]'), 250);
     power(tl, q(el, '[data-anim="power"]'), 700);
-    fade(tl, q(el, '[data-anim="card"]'), 1000, 110);
-    trace(tl, q(el, '[data-anim="trace"]'), 1100, 260);
+    fade(tl, q(el, '[data-anim="card"]'), 950, 110);
     return () => tl.revert();
   });
 
@@ -125,10 +121,16 @@ export default function Services() {
             <article
               key={s.title}
               data-anim="card"
-              className="card card-hover spot overflow-hidden"
+              className="card card-hover spot group overflow-hidden"
             >
-              <div className="aspect-[2/1] border-b border-line bg-[#0b1220] px-3 pt-2">
-                {s.art}
+              <div className="relative aspect-[2/1] overflow-hidden border-b border-line bg-[#0b1220]">
+                <Image
+                  src={s.img}
+                  alt={s.alt}
+                  fill
+                  sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                />
               </div>
               <div className="p-6 pt-5">
                 <h3 className="text-lg font-semibold">{s.title}</h3>

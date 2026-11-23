@@ -1,11 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import Signal from "./Signal";
 import { useInView } from "@/lib/motion";
 import { develop, fade, grow, q, signal, timeline, wipe } from "@/lib/reveal";
 
-// Illustrations are stills from the LiveTelco film (scripts/make-scenes.mjs).
+// Illustrations are stills and clips from the LiveTelco film.
 const STEPS = [
   {
     t: "Gate and fence",
@@ -34,6 +35,39 @@ const CHECKS = [
 ];
 
 export default function HowItWorks() {
+  const video = useRef<HTMLVideoElement>(null);
+  const [paused, setPaused] = useState(false);
+  const pausedRef = useRef(false);
+
+  const togglePause = () => {
+    const v = video.current;
+    if (!v) return;
+    pausedRef.current = !pausedRef.current;
+    setPaused(pausedRef.current);
+    if (pausedRef.current) v.pause();
+    else v.play().catch(() => {});
+  };
+
+  useEffect(() => {
+    const v = video.current;
+    if (!v) return;
+    v.muted = true;
+    let onScreen = true;
+    const tryPlay = () => onScreen && !pausedRef.current && v.paused && v.play().catch(() => {});
+    const io = new IntersectionObserver(([e]) => {
+      onScreen = e.isIntersecting;
+      if (onScreen) tryPlay();
+      else v.pause();
+    });
+    io.observe(v);
+    v.addEventListener("canplay", tryPlay);
+    tryPlay();
+    return () => {
+      io.disconnect();
+      v.removeEventListener("canplay", tryPlay);
+    };
+  }, []);
+
   // the signal crosses the illustration from left to right, then the five steps
   // light up in order like a progress line
   const ref = useInView<HTMLElement>(
@@ -76,15 +110,35 @@ export default function HowItWorks() {
           </p>
         </div>
 
-        <div data-anim="wipe" className="frame mt-12">
-          <Image
-            src="/media/scenes/how.webp"
-            alt="LiveTelco teleport: satellites link to your antennas, inside a fenced site with CCTV, shelter, generator and grid power"
-            width={1240}
-            height={560}
-            sizes="(min-width: 1200px) 1120px, 100vw"
-            className="w-full"
+        <div data-anim="wipe" className="frame relative mt-12 aspect-[16/9] w-full overflow-hidden bg-[#05090f]">
+          <video
+            ref={video}
+            src="/media/how-it-works.mp4"
+            poster="/media/scenes/how-poster.webp"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            aria-label="Animated teleport walkthrough showing satellites in LEO orbit linking to antennas, shelter, power and grid"
+            className="h-full w-full object-cover"
           />
+          <button
+            type="button"
+            onClick={togglePause}
+            aria-label={paused ? "Play the teleport walkthrough animation" : "Pause the teleport walkthrough animation"}
+            className="absolute bottom-3 right-3 grid h-9 w-9 place-items-center rounded-full border border-white/25 bg-[#05090f]/75 text-white backdrop-blur transition-colors hover:border-white/60 hover:bg-[#05090f]/90"
+          >
+            {paused ? (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="ml-0.5">
+                <path d="M8 5.5v13l11-6.5z" />
+              </svg>
+            ) : (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" />
+              </svg>
+            )}
+          </button>
         </div>
 
         <ol className="mt-10 grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-5">
